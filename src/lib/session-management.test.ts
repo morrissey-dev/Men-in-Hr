@@ -22,7 +22,7 @@ describe('session workspace v0.6',()=>{
     const second={...sample,sessionId:'week-2',options:{...options,sessionId:'week-2'},plan:'# Week 2'};
     const result=addOrReplace(first,second);
     expect(Object.keys(result.sessions)).toEqual(['week-1','week-2']);
-    expect(result.sessions['week-1'].plan).toContain('Week');
+    expect(result.sessions['week-1'].plan).toBe(sample.plan);
     const s=fakeStore();saveWorkspace(s,result);expect(removeSession(s,result,'week-1').sessions['week-2']).toBeDefined();
     expect(loadWorkspace(s).sessions['week-1']).toBeUndefined();
   });
