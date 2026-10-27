@@ -92,7 +92,7 @@ export function getSessionTemplate(sessionId:string) {
   return session;
 }
 function schedule(sessionId: string, date: string): string {
-  const t = getSessionTemplate(sessionId);
+  getSessionTemplate(sessionId);
   const dateText = date ? `${date} (confirm EAT schedule)` : 'date to be confirmed';
   return sessionId.startsWith('preliminary-') ? dateText : `${dateText}; planned Thursdays, 8:00–9:00 PM EAT`;
 }
