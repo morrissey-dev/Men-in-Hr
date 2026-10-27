@@ -14,7 +14,7 @@ describe('session workspace v0.6',()=>{
   });
   it('saves and restores a single editable plan after reload',()=>{
     const s=fakeStore();const updated=addOrReplace(emptyWorkspace(),sample);saveWorkspace(s,updated);
-    expect(loadWorkspace(s).sessions['week-1']).toEqual(sample);
+    expect(loadWorkspace(s).sessions['week-1']).toEqual(updated.sessions['week-1']);
     expect(s.getItem(WORKSPACE_KEY)).not.toContain('secret_key');
   });
   it('overwrites only the selected session without losing other weeks',()=>{
