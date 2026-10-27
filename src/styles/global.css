@@ -1779,3 +1779,35 @@ a:focus-visible,button:focus-visible {
 .facilitation-note{border-left:4px solid #719c80;background:#eaf3e7;color:#2a4b3d;padding:15px 18px;border-radius:0 10px 10px 0;line-height:1.6}
 @media(max-width:850px){.facilitation-grid{grid-template-columns:1fr}.facilitation-intro{flex-direction:column}.facilitation-private{white-space:normal}}
 @media(max-width:540px){.facilitation-actions .button{width:100%;justify-content:center}}
+
+/* v0.6.0 — facilitator session-management workspace */
+.facilitation-management{display:grid;gap:16px}
+.facilitation-management h4{font-size:21px;margin:0}
+.facilitation-management>p{line-height:1.6;color:var(--muted);margin:0}
+.facilitation-management-heading{display:flex;align-items:start;justify-content:space-between;gap:14px}
+.facilitation-management-heading p{font-size:13px;color:var(--muted);margin:6px 0}
+.facilitation-management-heading>span{white-space:nowrap;color:#41634c;font-size:12px;font-weight:700}
+.facilitation-metadata{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.facilitation-metadata>div{display:grid;gap:7px;align-content:start}
+.facilitation-metadata label{font-weight:750;font-size:13px;color:#26473f}
+.facilitation-metadata input,.facilitation-metadata select,.facilitation-metadata textarea,.facilitation-tool textarea{width:100%;min-width:0;border:1px solid #bdcac0;border-radius:9px;padding:10px 12px;color:var(--ink);background:#fff;font:inherit}
+.facilitation-metadata textarea{resize:vertical}
+.facilitation-metadata-wide{grid-column:1/-1}
+.facilitation-metadata .admin-help{margin:0}
+.facilitation-continuity{background:#eef5ec;border:1px solid #cedecd;border-radius:10px;padding:13px 14px;color:#26483b;font-size:13px;line-height:1.55;display:grid;gap:5px}
+.facilitation-continuity p{margin:0!important}
+.facilitation-continuity button{justify-self:start}
+.facilitation-saved{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:12px;color:#4d6c57}
+.facilitation-saved span{display:flex;align-items:center;gap:5px;margin-right:auto}
+.facilitation-saved .button{font-size:12px;min-height:35px;padding:7px 10px}
+.facilitation-toolkit{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.facilitation-tool{border:1px solid #dfebde;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.facilitation-tool h5{display:flex;align-items:center;gap:8px;color:#244e3d;font-size:16px;margin:0}
+.facilitation-tool textarea{font-size:13px;line-height:1.6;resize:vertical;flex:1;min-height:150px}
+.facilitation-tool button{align-self:flex-start;font-size:13px}
+.facilitation-import{position:relative;cursor:pointer}
+.facilitation-import input{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.facilitation-note{display:flex;gap:12px;align-items:start}
+.facilitation-note svg{flex:none;margin-top:4px}
+@media(max-width:800px){.facilitation-toolkit{grid-template-columns:1fr}.facilitation-metadata{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.facilitation-metadata{grid-template-columns:1fr}.facilitation-management-heading{flex-direction:column}.facilitation-tool button{width:100%}}
