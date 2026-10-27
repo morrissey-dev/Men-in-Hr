@@ -1,4 +1,4 @@
-import { facilitationSessions, type SessionTemplate } from '../data/facilitation-content';
+import { facilitationSessions, type SessionTemplate } from '../data/facilitation-content.ts';
 export type GuestStatus = 'confirmed' | 'no' | 'uncertain';
 export type SessionEmphasis = 'balanced' | 'practical' | 'discussion';
 export type PlanOptions = {

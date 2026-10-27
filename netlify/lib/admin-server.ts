@@ -29,7 +29,7 @@ function settings(): AdminSettings | null {
   } catch { return null; }
 }
 
-async function serviceFetch(s: AdminSettings, path: string, init: RequestInit = {}) {
+export async function serviceFetch(s: AdminSettings, path: string, init: RequestInit = {}) {
   return fetch(`${s.url}/rest/v1/${path}`, {
     ...init, headers: { apikey: s.secret, Accept: 'application/json', 'Content-Type': 'application/json', ...(init.headers || {}) },
     signal: AbortSignal.timeout(8000),
@@ -38,7 +38,7 @@ async function serviceFetch(s: AdminSettings, path: string, init: RequestInit = 
 
 function failure(status: number, error: string) { return json({ error }, status); }
 
-async function authorize(request: Request, mutate = false, owner = false): Promise<Allowed> {
+export async function authorize(request: Request, mutate = false, owner = false): Promise<Allowed> {
   const s = settings();
   if (!s) return { error: failure(503, 'Administration is not configured.') };
   if (mutate && request.headers.get('origin') !== s.origin) return { error: failure(403, 'Origin not permitted.') };
@@ -84,7 +84,8 @@ export async function adminSession(request: Request): Promise<Response> {
   const facilitatorId = process.env.FACILITATOR_USER_ID?.trim() || '';
   const canFacilitate = check.admin.role === 'owner'
     && UUID.test(facilitatorId) && check.admin.userId.toLowerCase() === facilitatorId.toLowerCase();
-  return json({ role: check.admin.role, canFacilitate });
+  const canCloudSync = canFacilitate && process.env.FACILITATION_CLOUD_SYNC_ENABLED === 'true';
+  return json({ role: check.admin.role, canFacilitate, ...(canCloudSync ? {canCloudSync:true} : {}) });
 }
 
 export async function adminApplications(request: Request): Promise<Response> {

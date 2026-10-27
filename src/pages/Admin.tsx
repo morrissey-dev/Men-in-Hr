@@ -47,6 +47,7 @@ export default function Admin() {
   const [checking, setChecking] = useState(true);
   const [role, setRole] = useState<Role | null>(null);
   const [canFacilitate, setCanFacilitate] = useState(false);
+  const [canCloudSync, setCanCloudSync] = useState(false);
   const [authError, setAuthError] = useState('');
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -71,7 +72,7 @@ export default function Admin() {
     if (!adminAuth) { setChecking(false); return; }
     void adminAuth.auth.getSession().then(({ data }) => { if (active) { setSignedIn(Boolean(data.session)); setChecking(false); } });
     const { data: listener } = adminAuth.auth.onAuthStateChange((_event, session) => {
-      if (active) { setSignedIn(Boolean(session)); if (!session) { setRole(null); setCanFacilitate(false); setTab('applications'); } }
+      if (active) { setSignedIn(Boolean(session)); if (!session) { setRole(null); setCanFacilitate(false); setCanCloudSync(false); setTab('applications'); } }
     });
     return () => { active = false; listener.subscription.unsubscribe(); };
   }, []);
@@ -80,9 +81,9 @@ export default function Admin() {
     if (!signedIn) return;
     let active = true;
     setChecking(true); setAuthError('');
-    void adminRequest<{ role: Role; canFacilitate?: boolean }>('session')
-      .then(res => { if (active) { setRole(res.role); setCanFacilitate(res.canFacilitate === true); } })
-      .catch(e => { if (active) { setRole(null); setCanFacilitate(false); setAuthError(e instanceof Error ? e.message : 'Access denied.'); } })
+    void adminRequest<{ role: Role; canFacilitate?: boolean; canCloudSync?: boolean }>('session')
+      .then(res => { if (active) { setRole(res.role); setCanFacilitate(res.canFacilitate === true); setCanCloudSync(res.canCloudSync === true); } })
+      .catch(e => { if (active) { setRole(null); setCanFacilitate(false); setCanCloudSync(false); setAuthError(e instanceof Error ? e.message : 'Access denied.'); } })
       .finally(() => { if (active) setChecking(false); });
     return () => { active = false; };
   }, [signedIn]);
@@ -128,7 +129,7 @@ export default function Admin() {
     finally { setAuthBusy(false); }
   }
   async function signOut() {
-    await adminAuth?.auth.signOut(); setSignedIn(false); setRole(null); setCanFacilitate(false); setTab('applications'); setApplications([]); setCohorts([]);
+    await adminAuth?.auth.signOut(); setSignedIn(false); setRole(null); setCanFacilitate(false); setCanCloudSync(false); setTab('applications'); setApplications([]); setCohorts([]);
   }
   async function createDraft(event: FormEvent) {
     event.preventDefault(); setActionError(''); setActionMessage('');
@@ -174,7 +175,7 @@ export default function Admin() {
           {listError && <p role="alert" className="admin-error">{listError}</p>}
           {loading ? <p role="status">Loading applications…</p> : applications.length === 0 ? <div className="admin-panel"><p>No applications match these filters.</p></div> : <div className="admin-application-list">{applications.map(app => <ApplicationRow key={app.id} item={app} onSaved={loadApplications}/>)}</div>}
           <div className="admin-pagination"><button type="button" className="button button--outline" disabled={page === 0 || loading} onClick={() => setPage(p => p-1)}>Previous</button><span>Page {page+1}</span><button type="button" className="button button--outline" disabled={!hasMore || loading} onClick={() => setPage(p => p+1)}>Next</button></div>
-        </> : tab === 'facilitation' && canFacilitate ? <FacilitationDesk/> : <>
+        </> : tab === 'facilitation' && canFacilitate ? <FacilitationDesk canCloudSync={canCloudSync}/> : <>
           <div className="admin-list-header"><h3>Programme cohorts</h3><p>New cohorts are created as drafts with registration closed. Only the platform administrator can change opening status.</p></div>
           {actionError && <p role="alert" className="admin-error">{actionError}</p>}{actionMessage && <p role="status" className="admin-success">{actionMessage}</p>}
           <div className="admin-cohort-list">{cohorts.map(cohort => <article className="admin-panel admin-cohort-card" key={cohort.id}><div><h4>{cohort.name}</h4><p>/{cohort.slug}</p><span className={`admin-status admin-status--${cohort.applications_open ? 'approved' : 'pending'}`}>{cohort.applications_open ? 'Applications open' : 'Applications closed'}</span></div>{role === 'owner' && <button type="button" className="button button--outline" onClick={() => void toggleCohort(cohort)}>{cohort.applications_open ? 'Close applications' : 'Request opening'}</button>}</article>)}</div>

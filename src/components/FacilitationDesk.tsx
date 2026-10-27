@@ -1,6 +1,7 @@
 import { useMemo, useState, type ChangeEvent, type FormEvent } from 'react';
 import { BookOpenText, ClipboardCopy, Download, FilePenLine, Sparkles, Save, ArchiveRestore, Trash2, MessageSquareText, ClipboardCheck, UsersRound, ShieldAlert, Upload } from 'lucide-react';
 import { facilitationSessions } from '../data/facilitation-content';
+import { adminRequest } from '../lib/admin-auth';
 import { createChatGPTPrompt, createFacilitationPlan, type GuestStatus, type SessionEmphasis, type PlanOptions } from '../lib/facilitation-planner';
 import { addOrReplace, continuityFor, emptyWorkspace, loadWorkspace, makeFeedbackQuestions, makeFollowUp, makeGuestBrief, makeReminder, parseWorkspace, removeSession, saveWorkspace, type DeliveryStatus, type SessionRecord, type SessionWorkspace } from '../lib/session-management';
 
@@ -16,7 +17,7 @@ function initialWorkspace(): SessionWorkspace {
   try { return loadWorkspace(window.localStorage); } catch { return emptyWorkspace(); }
 }
 
-export default function FacilitationDesk() {
+export default function FacilitationDesk({canCloudSync=false}: {canCloudSync?:boolean}) {
   const [sessionId,setSessionId] = useState('week-1');
   const [guest,setGuest] = useState<GuestStatus>('uncertain');
   const [emphasis,setEmphasis] = useState<SessionEmphasis>('balanced');
@@ -33,6 +34,10 @@ export default function FacilitationDesk() {
   const [copied,setCopied] = useState<CopyType|null>(null);
   const [error,setError] = useState('');
   const [notice,setNotice] = useState('');
+  const [cloudRevision,setCloudRevision] = useState<number|null>(null);
+  const [cloudBusy,setCloudBusy] = useState(false);
+  const [cloudMessage,setCloudMessage] = useState('Cloud backup is optional, not automatic.');
+  const [cloudCopy,setCloudCopy] = useState<SessionWorkspace|null>(null);
   const selected=useMemo(()=>facilitationSessions.find(s=>s.id===sessionId)!,[sessionId]);
   const saved=workspace.sessions[sessionId];
   const continuity=continuityFor(sessionId,workspace);
@@ -86,6 +91,32 @@ export default function FacilitationDesk() {
       saveWorkspace(window.localStorage,parsed);setWorkspace(parsed);setDraft('');setDraftOptions(null);setNotice('Backup imported. Select a session and use Load saved to restore its plan.');setError('');
     }catch {setError('Unable to import. Use a valid Men in HR facilitation backup JSON file.');}
   }
+  async function checkCloud(){
+    setCloudBusy(true);setError('');
+    try{
+      const result=await adminRequest<{workspace:SessionWorkspace;revision:number;updatedAt:string|null}>('facilitation-sync');
+      setCloudCopy(parseWorkspace(JSON.stringify(result.workspace)));setCloudRevision(result.revision);
+      setCloudMessage(result.revision===0?'No cloud copy exists yet. Your local plans were not changed.':`Cloud copy checked (revision ${result.revision}). Your local drafts were not changed.`);
+    }catch(e){setCloudRevision(null);setCloudCopy(null);setError(e instanceof Error?e.message:'Cloud backup unavailable.');}
+    finally{setCloudBusy(false);}
+  }
+  async function uploadCloud(){
+    if(cloudRevision===null){setError('Check the cloud copy before uploading.');return;}
+    if(!window.confirm('Upload all current local plans to the private cloud copy? This will replace the cloud version you checked. Do not include identifiable student details.'))return;
+    setCloudBusy(true);setError('');
+    try{
+      const result=await adminRequest<{revision:number}>('facilitation-sync',{method:'PUT',body:JSON.stringify({workspace,expectedRevision:cloudRevision})});
+      setCloudRevision(result.revision);setCloudCopy(workspace);
+      setCloudMessage(`Private cloud backup saved (revision ${result.revision}). This is a manual copy, not automatic sync.`);
+    }catch(e){setCloudRevision(null);setCloudCopy(null);setError(e instanceof Error?e.message:'Cloud upload failed. Recheck the cloud copy.');}
+    finally{setCloudBusy(false);}
+  }
+  function restoreCloud(){
+    if(cloudRevision===null||!cloudCopy||cloudRevision===0){setError('There is no cloud copy to restore.');return;}
+    if(!window.confirm('Replace every local saved plan with the checked cloud copy? Download a local backup first if needed.'))return;
+    try{saveWorkspace(window.localStorage,cloudCopy);setWorkspace(cloudCopy);setDraft('');setDraftOptions(null);setNotice('Cloud copy restored in this browser.');setError('');}
+    catch{setError('Unable to restore cloud copy to this browser.');}
+  }
   async function copyText(text:string,kind:CopyType){
     try{await navigator.clipboard.writeText(text);setCopied(kind);setError('');}
     catch{setError('Clipboard unavailable. Select and copy the text manually.');}
@@ -135,6 +166,16 @@ export default function FacilitationDesk() {
       <div className="facilitation-toolkit">{shareOptions.map(tool=><article className="facilitation-tool" key={tool.id}><h5><tool.icon size={17}/>{tool.label}</h5><textarea readOnly aria-label={tool.label+' draft'} value={tool.text} rows={tool.id==='brief'?12:8}/><button type="button" className="button button--outline" onClick={()=>void copyText(tool.text,tool.id)} disabled={tool.id==='recap'&&status!=='delivered'}><ClipboardCopy size={15}/>{tool.id==='recap'&&status!=='delivered'?'Mark delivered to copy':'Copy draft'}</button></article>)}</div>
       {copied&&<p className="admin-help" role="status">{copied==='prompt'?'ChatGPT refinement prompt':copied==='plan'?'Facilitation plan':shareOptions.find(s=>s.id===copied)?.label} copied. Review before sharing.</p>}
     </div>
+    {canCloudSync && <div className="admin-panel facilitation-cloud">
+      <h4>Private cloud backup (manual)</h4>
+      <p>Only your authorised account can access this backup. Check the cloud version before uploading or restoring. This does not automatically synchronise changes across devices.</p>
+      <div className="facilitation-cloud-actions">
+        <button type="button" className="button button--outline" disabled={cloudBusy} onClick={()=>void checkCloud()}>Check cloud copy</button>
+        <button type="button" className="button button--dark" disabled={cloudBusy||cloudRevision===null} onClick={()=>void uploadCloud()}>Upload local plans</button>
+        <button type="button" className="button button--outline" disabled={cloudBusy||cloudRevision===null||cloudRevision===0} onClick={restoreCloud}>Restore checked copy</button>
+      </div>
+      <p className="admin-help" role="status">{cloudMessage}</p>
+    </div>}
     <div className="facilitation-note"><ShieldAlert size={19}/><div><strong>Privacy and backups:</strong> Saved notes use this browser's local storage, not a protected central database. Avoid shared devices and sensitive data. Clearing browser data can erase saved work; download an offline backup regularly. ChatGPT Plus can help refine plans using the copy prompt, but never paste identifiable student feedback into AI.</div></div>
   </section>;
 }
