@@ -1,0 +1,12 @@
+import { ArrowUpRight, Compass, HeartHandshake, Target } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import SectionHeading from '../components/SectionHeading';
+
+export default function About() {
+  return <>
+    <section className="page-hero"><div className="container"><span className="eyebrow"><i /> OUR STORY</span><h1>Creating space<br />for <em>possibility.</em></h1><p>Men in HR is a developing, student-informed initiative encouraging male HR students to participate, connect and prepare for their futures.</p></div></section>
+    <section className="section"><div className="container split-content"><div><span className="eyebrow"><i /> THE IDEA</span><h2>It started with a question.</h2></div><div className="body-large"><p>What would help more male students become actively involved in HR learning communities, beyond simply attending an event?</p><p>Men in HR is our response: a welcoming space for mentorship, candid conversations, skills development and professional connections. Rather than assuming what students need, we're shaping the programme around their expressed interests.</p><p>The initiative is being developed within the JKUAT Human Resource Students' Association (JKUAT HRSA). The proposed first cohort is a starting point, not the end of the vision.</p></div></div></section>
+    <section className="section section--tint"><div className="container"><SectionHeading tag="OUR GUIDING IDEAS" title="A clear purpose. A human approach." /><div className="value-grid"><article className="value-card"><span className="value-card__icon"><Target size={26}/></span><h3>Our mission</h3><p>Encourage participation and support male HR students through mentorship, learning and meaningful engagement.</p></article><article className="value-card"><span className="value-card__icon"><Compass size={26}/></span><h3>Our vision</h3><p>A growing network of confident, connected and prepared future HR professionals.</p></article><article className="value-card"><span className="value-card__icon"><HeartHandshake size={26}/></span><h3>Our approach</h3><p>Listen to students, collaborate with mentors and build a programme that can evolve over time.</p></article></div></div></section>
+    <section className="section"><div className="container centered-outro"><span className="eyebrow"><i /> WHAT'S NEXT</span><h2>Growth is better together.</h2><p>Explore the proposed programme for our first mentorship cohort.</p><Link to="/programme" className="button button--primary">View Cohort 1 <ArrowUpRight size={18}/></Link></div></section>
+  </>;
+}
