@@ -1704,3 +1704,57 @@ a:focus-visible,button:focus-visible {
 .application-submit:disabled{opacity:.6;cursor:wait}
 @media(max-width:820px){.apply-layout{grid-template-columns:1fr;gap:33px}.apply-sidebar__panel{display:none}}
 @media(max-width:600px){.application-form{padding:23px 17px}.form-grid,.interest-options{grid-template-columns:1fr}.form-intro h2{font-size:32px}.application-state{padding:30px 24px}.application-state h2{font-size:31px}}
+
+/* v0.3.0 - private coordinator workspace; no public navigation to /admin. */
+.admin-layout{max-width:1010px;display:grid;gap:25px}
+.admin-panel{border:1px solid #dce4dd;background:#fff;border-radius:13px;padding:27px;box-shadow:0 9px 26px rgba(24,54,43,.035)}
+.admin-splash,.admin-login{width:min(100%,530px);margin:0 auto;display:grid;gap:14px}
+.admin-splash>svg,.admin-login>svg{color:#326450}
+.admin-splash h2,.admin-login h2,.admin-heading h2{font-size:clamp(25px,3vw,38px);font-family:Georgia,serif;font-weight:500;letter-spacing:-.035em;margin:0}
+.admin-splash p,.admin-login p,.admin-heading p,.admin-help{color:#61746c;line-height:1.65;margin:0}
+.admin-login form,.admin-create-cohort{display:grid;gap:13px}
+.admin-layout label{font-weight:700;font-size:13px;color:#244c40;display:block}
+.admin-layout input,.admin-layout select{width:100%;min-height:46px;border:1px solid #cbd9cd;border-radius:7px;background:#fff;padding:11px 12px;color:#173a31;font:inherit}
+.admin-layout input:focus-visible,.admin-layout select:focus-visible{outline:3px solid #8bb76f;outline-offset:1px}
+.admin-layout button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.admin-inline{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.admin-text-button{border:0;background:transparent;color:#275d4a;text-decoration:underline;cursor:pointer}
+.admin-error{background:#fff1ee;color:#90382b;border:1px solid #efc9c0;border-radius:7px;padding:12px;font-size:13px;overflow-wrap:anywhere}
+.admin-success{color:#1d6040;background:#eaf6ed;padding:12px;border-radius:7px}
+.admin-workspace{display:grid;gap:22px}
+.admin-heading{display:flex;align-items:start;justify-content:space-between;gap:25px}
+.admin-heading h2{margin:10px 0}
+.admin-tabs{display:flex;gap:10px;border-bottom:1px solid #d8e2d8;flex-wrap:wrap}
+.admin-tabs button{border:0;background:transparent;padding:14px 18px;display:inline-flex;gap:10px;align-items:center;cursor:pointer;font-weight:700;color:#526d60;border-bottom:3px solid transparent}
+.admin-tabs button.active{color:#1f553c;border-color:#59846a}
+.admin-filters{display:flex;align-items:end;flex-wrap:wrap;gap:13px;margin-bottom:22px}
+.admin-filters>div{flex:1;min-width:170px;display:grid;gap:8px}
+.admin-list-header{margin:9px 0 22px}
+.admin-list-header h3{font-family:Georgia,serif;font-weight:500;letter-spacing:-.03em;font-size:30px;margin:0 0 6px}
+.admin-list-header p{margin:0;color:#657b6d;font-size:13px;line-height:1.6}
+.admin-application-list,.admin-cohort-list{display:grid;gap:14px}
+.admin-application-card{display:grid;gap:15px;border:1px solid #dce6de;border-radius:11px;padding:22px;background:#fff;overflow-wrap:anywhere}
+.admin-card-head,.admin-cohort-card{display:flex;align-items:start;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.admin-card-head strong{display:block;font-size:17px;color:#153e32;margin-bottom:5px}
+.admin-card-head small{display:block;color:#587267}
+.admin-status{border-radius:30px;background:#eff2ea;color:#51664d;padding:8px 10px;font-size:11px;font-weight:800;white-space:nowrap;text-transform:capitalize}
+.admin-status--approved{background:#e1f2e2;color:#24663b}
+.admin-status--declined{background:#f8e7e4;color:#904c42}
+.admin-status--withdrawn{background:#eeeeee;color:#777}
+.admin-card-meta,.admin-chip-row{display:flex;flex-wrap:wrap;gap:10px;color:#576b60;font-size:12px}
+.admin-topic-chip{padding:6px 9px;border-radius:5px;background:#edf3e5}
+.admin-notes{padding:10px 12px;background:#f6f7f1;border-radius:7px}
+.admin-notes summary{cursor:pointer;font-size:13px;font-weight:700;color:#31624a}
+.admin-notes p{line-height:1.6;white-space:pre-wrap;font-size:13px;overflow-wrap:anywhere}
+.admin-row-actions{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:10px;border-top:1px solid #e8eee7}
+.admin-row-actions select{width:auto;flex:1;min-width:135px}
+.admin-row-actions .button{min-height:45px}
+.admin-pagination{display:flex;align-items:center;justify-content:center;gap:18px;margin:24px 0}
+.admin-cohort-card{align-items:center}
+.admin-cohort-card h4,.admin-create-cohort h4{margin:0 0 8px;font-size:19px}
+.admin-cohort-card p{color:#677f6d;margin:0 0 10px}
+.admin-form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.admin-form-grid>div{display:grid;gap:8px}
+.admin-create-cohort{margin-top:22px}
+.admin-create-cohort button{justify-self:start}
+@media(max-width:650px){.admin-panel{padding:18px}.admin-application-card{padding:16px}.admin-heading{flex-direction:column}.admin-form-grid{grid-template-columns:1fr}.admin-row-actions .button{width:100%}.admin-pagination{gap:8px}.admin-pagination .button{padding:10px 12px}.admin-card-head{flex-direction:column;gap:8px}}

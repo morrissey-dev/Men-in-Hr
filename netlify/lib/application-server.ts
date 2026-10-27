@@ -47,6 +47,10 @@ function loadSettings(): Settings | null {
   return { origin: origin.replace(/\/$/, ''), supabaseUrl: supabaseUrl.replace(/\/$/, ''), supabaseKey, cohortSlug: process.env.APPLICATION_COHORT_SLUG?.trim() || 'cohort-1', siteKey, secretKey, controller, email, retentionDays };
 }
 
+export function registrationConfigurationReady(): boolean {
+  return loadSettings() !== null;
+}
+
 async function database(settings: Settings, path: string, init: RequestInit = {}): Promise<Response> {
   return fetch(`${settings.supabaseUrl}/rest/v1/${path}`, {
     ...init,

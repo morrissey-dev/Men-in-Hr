@@ -1,8 +1,19 @@
 # Men in HR Connect
 
-**Version 0.2.0 — public website + closed-by-default student application system** for the Men in HR mentorship initiative being developed within JKUAT HRSA.
+**Version 0.3.0 — public website + gated student applications + gated coordinator dashboard** for the Men in HR mentorship initiative being developed within JKUAT HRSA.
 
 ## What works now
+
+### Milestone 3: Administrator workspace (new)
+
+- Private `/admin` route with email-code authentication for previously approved Supabase Auth users (`shouldCreateUser: false`).
+- `/api/admin/session`, `/api/admin/applications`, `/api/admin/cohorts` protected Netlify endpoints. Every call verifies the Supabase Auth access token and checks an active database administrator membership.
+- Private applications list (filter, page, review interests and motivation), allowed application decisions, locked withdrawals.
+- Two roles: `coordinator` for reviewing applications and `owner` for draft cohort creation and safely gated opening/closing.
+- Audited database RPCs commit status changes and their logs atomically.
+- **Admin is OFF by default** until approved manual account provisioning, both SQL migrations and Netlify and Supabase configuration. See [`docs/admin-setup.md`](docs/admin-setup.md).
+
+### Milestones 1 and 2
 
 - The entire v0.1.0 site (Home, About, Programme, Events, Get Involved, Contact, Privacy, 404) remains in place.
 - New `/apply` page with a mobile-responsive interest form, accessible labels and on-page validation.
@@ -12,7 +23,7 @@
 - Supabase PostgreSQL migration for cohorts and applications. RLS enabled; anonymous and authenticated table privileges revoked; private secret stored server-side only.
 - A duplicate email for the same cohort receives a generic confirmation rather than revealing whether it already exists.
 - The Privacy page documents the current workflow and conditionally shows approved contact and retention information when registration is enabled.
-- Fifteen offline Node tests for validation and server logic. **Applications stay CLOSED by default**, including on static Vite previews.
+- Thirty-two offline Node tests (17 new admin checks + 15 application checks) for validation and server logic. **Applications stay CLOSED by default**, including on static Vite previews.
 
 ## Important status
 
@@ -32,7 +43,7 @@ The site runs at `http://localhost:5173` by default. The `/apply` route opens an
 ```bash
 npm run build       # type-check + production build
 npm run test        # existing Vitest content tests (requires npm install)
-npm run test:core   # 15 offline validation/security tests on Node 22+
+npm run test:core   # 32 offline registration/admin tests on Node 22+
 ```
 
 ## Activate secure student applications — NOT required for visual preview
@@ -55,7 +66,7 @@ Install Netlify CLI separately when internet is available, then run `netlify dev
 - Collect full name, email, institution, study level, 1–3 topics and optional motivation only.
 - Require an adult-only confirmation in the initial prototype; applicants younger than 18 are not eligible via this form pending an approved safeguarding arrangement. The broader initiative eligibility is **not** being redefined by this software decision.
 - No phone number, identification number, health information or password collected.
-- No public application listing, mentor matching, admin accounts or automated emails yet.
+- No public application listing, mentor matching, public account creation or automated emails yet. Staff-only admin logins now require explicit manual provisioning; the dashboard remains disabled by default.
 - The database insert uses a server-only secret key, which bypasses RLS. It must never be exposed to browser clients.
 - Document and OPERATE deletion: `APPLICATION_RETENTION_DAYS` describes an approved maximum, **not** an automatic deletion task. `RETENTION_PROCESS_ACTIVE` must not be set without a real, tested deletion process.
 - Cloudflare, Netlify and Supabase provider arrangements and international transfer safeguards need review before live collection.
@@ -68,15 +79,23 @@ src/
   data/content.ts           # editable programme topics & events
   lib/application-*.ts      # shared form validation and public status helper
   pages/Apply.tsx           # student registration page
+  pages/Admin.tsx           # private, role-aware coordinator dashboard (off by default)
+  lib/admin-auth.ts         # Supabase Auth sign-in and bearer-token API caller
   pages/                    # all original pages
   styles/global.css         # original stylesheet extended for form
 netlify/
-  functions/                # GET status & POST application endpoints
-  lib/application-server.ts # trusted backend integration
+  functions/                # registration + authenticated admin endpoints
+  lib/application-server.ts # trusted registration backend
+  lib/admin-server.ts       # token verification + role-authorised admin actions
 supabase/migrations/        # PostgreSQL tables + RLS/grants
 spec and process: docs/
-tests/application.test.mjs   # fast offline server tests
+tests/application.test.mjs   # fast offline registration tests
+tests/admin.test.mjs         # admin security and RBAC tests
 ```
+
+## Admin dashboard — next step to activate securely
+
+The dashboard is viewable at `/admin` but **disabled by default**. For its verified login, database migration, roles, audited decisions and test procedure, follow **[`docs/admin-setup.md`](docs/admin-setup.md)**. Never publish real applicant information to an unapproved environment.
 
 ## Git / preservation
 
@@ -84,7 +103,7 @@ This release **extends** the existing project; it does not regenerate or replace
 
 ```bash
 git add .
-git commit -m "feat: add secure gated student cohort applications"
+git commit -m "feat: add role-protected mentorship administration"
 ```
 
 No push to GitHub has been made. The GitHub remote and final stakeholder approvals are not yet configured.

@@ -43,3 +43,28 @@
 - [ ] Record approved responsible organisation, retention/contact information and privacy notice.
 - [ ] Test end-to-end submission, duplicates, disabled cohort and CAPTCHA expiry.
 - [ ] Review the form at mobile screen widths and using screen readers.
+
+## Milestone 3 — Secure administration
+- [x] `/admin` route added without navigation link from public header.
+- [x] Both client and backend administration are opt-in and disabled by default.
+- [x] JWT validated with Supabase Auth before any private query.
+- [x] Database membership determines coordinator versus owner role.
+- [x] Coordinator cannot create or open cohorts.
+- [x] Application status decisions use atomic SQL update-and-audit function.
+- [x] Both private table access and RPC access revoked from public/anon/authenticated roles.
+- [x] Admin lists use fixed column selection, page size and validated filters.
+- [x] New draft cohorts created with applications closed.
+- [x] Opening configured cohort is blocked without registration approval gates.
+- [x] Existing offline validation and security tests still pass (32 total).
+- [ ] `npm install`, `npm run build`, `npm run test` in a network-enabled Node environment.
+- [ ] Run both SQL migrations in order in an isolated test Supabase project.
+- [ ] Configure Auth email template to send verification CODE (`{{ .Token }}`) instead of default magic link.
+- [ ] Create one approved user in Supabase Auth dashboard and activate their UUID in `admin_members`.
+- [ ] Validate coordinator sees private records and owner can change cohorts; unapproved Auth user sees 403.
+- [ ] Confirm OTP email rate limits, MFA requirement (if institutional policy), domain and redirect rules.
+- [ ] Validate RLS/revoked privileges with direct anon/authenticated Supabase queries and RPC attempts.
+- [ ] Confirm SQL application decision + audit always roll back together on failure.
+- [ ] Review CSRF/cross-origin protection, Content Security Policy and browser-session risk in deployed environment.
+- [ ] Test mobile admin filters, OTP flow, keyboard-only controls, screen readers and empty/error states.
+- [ ] Validate approved retention/deletion routine covers applications, any lawful records and audit events.
+- [ ] Confirm registered students do not receive access to `/api/admin` merely because they have a Supabase account.
