@@ -18,7 +18,7 @@ const requiredRoutes = {
   '/api/admin/cohorts': 'netlify/functions/admin-cohorts.mts',
 };
 
-assert.equal(pack.version, '0.4.0', 'Update the package version with the release');
+assert.equal(pack.version, '0.5.0', 'Update the package version with the release');
 for (const [name, path] of Object.entries(requiredRoutes)) {
   assert.ok(existsSync(join(root, path)), `Missing API function: ${path}`);
   assert.ok(read(path).includes(`path: '${name}'`), `Incorrect route for ${path}`);
@@ -41,4 +41,7 @@ assert.match(migrations, /revoke all on public\.applications from anon, authenti
 assert.match(read('netlify/lib/application-server.ts'), /APPLICATIONS_OPEN !== 'true'/, 'Registration must fail closed');
 assert.match(read('netlify/lib/admin-server.ts'), /ADMIN_DASHBOARD_ENABLED !== 'true'/, 'Admin must fail closed');
 
+assert.ok(existsSync(join(root, 'src/components/FacilitationDesk.tsx')), 'Personal facilitation desk missing');
+assert.match(read('netlify/lib/admin-server.ts'), /FACILITATOR_USER_ID/, 'Facilitation must be server-gated');
+assert.doesNotMatch(env, /^VITE_FACILITATOR_USER_ID=/m, 'Private facilitator ID must not be client-exposed');
 console.log(`Release v${pack.version}: ${Object.keys(requiredRoutes).length} API routes, closed-by-default flags, migrations, security headers and ignored secrets verified.`);

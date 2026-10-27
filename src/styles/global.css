@@ -1758,3 +1758,24 @@ a:focus-visible,button:focus-visible {
 .admin-create-cohort{margin-top:22px}
 .admin-create-cohort button{justify-self:start}
 @media(max-width:650px){.admin-panel{padding:18px}.admin-application-card{padding:16px}.admin-heading{flex-direction:column}.admin-form-grid{grid-template-columns:1fr}.admin-row-actions .button{width:100%}.admin-pagination{gap:8px}.admin-pagination .button{padding:10px 12px}.admin-card-head{flex-direction:column;gap:8px}}
+
+/* Personal facilitation workspace (v0.5.0). Never displayed without owner ID gate. */
+.facilitation-desk{display:grid;gap:24px;padding-top:20px}
+.facilitation-intro{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}
+.facilitation-intro h3{display:flex;align-items:center;gap:10px;font-size:clamp(21px,2.3vw,28px);margin:8px 0}
+.facilitation-intro p{color:var(--muted);max-width:650px;line-height:1.6}
+.facilitation-private{border:1px solid #c4d8c6;background:#edf5ed;color:#204938;font-size:12px;font-weight:750;border-radius:100px;padding:10px 15px;white-space:nowrap}
+.facilitation-grid{display:grid;grid-template-columns:minmax(265px,.85fr) minmax(0,1.45fr);gap:18px;align-items:start}
+.facilitation-form,.facilitation-result{display:flex;flex-direction:column;gap:12px}
+.facilitation-form h4,.facilitation-result h4{font-size:20px;margin:0 0 7px}
+.facilitation-form label,.facilitation-result label{font-size:13px;font-weight:750;color:#26473f}
+.facilitation-form input,.facilitation-form select,.facilitation-form textarea,.facilitation-editor{width:100%;min-width:0;border:1px solid #bdcac0;border-radius:10px;padding:12px 13px;background:#fff;color:var(--ink);font:inherit}
+.facilitation-form textarea{resize:vertical}
+.facilitation-editor{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:13px;line-height:1.6;resize:vertical;min-height:370px}
+.facilitation-actions{display:flex;flex-wrap:wrap;gap:10px}
+.facilitation-actions .button{font-size:13px}
+.facilitation-empty{border:1px dashed #b8cbbc;border-radius:13px;padding:45px 18px;text-align:center;color:var(--muted);display:grid;justify-items:center;gap:10px}
+.facilitation-empty p{max-width:390px;line-height:1.6;margin:0}
+.facilitation-note{border-left:4px solid #719c80;background:#eaf3e7;color:#2a4b3d;padding:15px 18px;border-radius:0 10px 10px 0;line-height:1.6}
+@media(max-width:850px){.facilitation-grid{grid-template-columns:1fr}.facilitation-intro{flex-direction:column}.facilitation-private{white-space:normal}}
+@media(max-width:540px){.facilitation-actions .button{width:100%;justify-content:center}}
