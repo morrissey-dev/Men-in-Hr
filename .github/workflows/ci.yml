@@ -1,0 +1,31 @@
+name: Verify Men in HR Connect
+
+on:
+  push:
+    branches: [main, 'release/**']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      # A package lock does not exist yet, so npm ci cannot be used.
+      # Add and commit package-lock.json before production release.
+      - name: Install frontend dependencies
+        run: npm install --no-audit --no-fund
+      - name: Check release security defaults
+        run: npm run verify:release
+      - name: Run backend core tests
+        run: npm run test:core
+      - name: Run frontend unit tests
+        run: npm test -- --run
+      - name: Build production website
+        run: npm run build

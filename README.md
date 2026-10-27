@@ -1,6 +1,14 @@
 # Men in HR Connect
 
-**Version 0.3.0 — public website + gated student applications + gated coordinator dashboard** for the Men in HR mentorship initiative being developed within JKUAT HRSA.
+**Version 0.4.0 — public website + gated student applications + gated coordinator dashboard** for the Men in HR mentorship initiative being developed within JKUAT HRSA.
+
+## Milestone 4 — deployment readiness (new)
+
+- GitHub Actions workflow for core tests, frontend unit tests, version/security-default checks, and production build.
+- Dependency-free `npm run verify:release` checks API routes, migrations, closed-by-default flags, security headers and secret exclusions.
+- Read-only staging checks via `npm run smoke:staging -- https://YOUR-TEST-SITE.netlify.app` (only on a closed staging site; no student information).
+- Detailed [`deployment runbook`](docs/deployment-runbook.md) and [`go-live checklist`](docs/go-live-checklist.md).
+- **NOT deployed:** Supabase, Netlify, retention controls and live authentication remain unconfigured.
 
 ## What works now
 
@@ -41,6 +49,7 @@ npm run dev
 The site runs at `http://localhost:5173` by default. The `/apply` route opens and accurately displays **Applications are currently closed** without a configured Netlify backend.
 
 ```bash
+npm run verify:release # dependency-free checks for release defaults
 npm run build       # type-check + production build
 npm run test        # existing Vitest content tests (requires npm install)
 npm run test:core   # 32 offline registration/admin tests on Node 22+
@@ -93,7 +102,7 @@ tests/application.test.mjs   # fast offline registration tests
 tests/admin.test.mjs         # admin security and RBAC tests
 ```
 
-## Admin dashboard — next step to activate securely
+## Admin dashboard — activation requires institutional approval
 
 The dashboard is viewable at `/admin` but **disabled by default**. For its verified login, database migration, roles, audited decisions and test procedure, follow **[`docs/admin-setup.md`](docs/admin-setup.md)**. Never publish real applicant information to an unapproved environment.
 
