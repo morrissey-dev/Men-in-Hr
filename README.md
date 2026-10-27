@@ -124,3 +124,9 @@ Inside `/admin`, the personal facilitator (identified by server-side `FACILITATO
 ## v0.6.0 — Personal session management
 
 `/admin` → **My Facilitation Desk** (only the specifically authorised owner account) now includes locally saved plans, session-date and anonymous summary notes, guest briefs, copy-only WhatsApp reminders and follow-ups, feedback questions, and cross-week commitment reminders. This uses device-local browser storage, **not** a central database: export backups and do not enter student personal information. See `docs/session-management.md`. Registration and remote facilitator-storage are still disabled.
+
+## v0.7.0 — Supabase PostgreSQL setup + optional manual cloud backup
+
+A third, owner-only database migration and an admin-only GET/PUT backup endpoint are prepared.
+**The database is not connected and cloud backup is OFF until approved staging setup.**
+Follow [PostgreSQL connection instructions](docs/postgres-connection.md). No database password, secret key, or student data belongs in GitHub.

@@ -1,6 +1,6 @@
 /** Facilitation-owned material ONLY. No student names, individual feedback, or contact details. */
-import { facilitationSessions } from '../data/facilitation-content';
-import type { PlanOptions } from './facilitation-planner';
+import { facilitationSessions } from '../data/facilitation-content.ts';
+import type { PlanOptions } from './facilitation-planner.ts';
 
 export const WORKSPACE_KEY = 'men-in-hr:facilitation-workspace:v1';
 const MAX_TEXT = 30_000;

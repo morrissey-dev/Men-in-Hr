@@ -16,14 +16,15 @@ const requiredRoutes = {
   '/api/admin/session': 'netlify/functions/admin-session.mts',
   '/api/admin/applications': 'netlify/functions/admin-applications.mts',
   '/api/admin/cohorts': 'netlify/functions/admin-cohorts.mts',
+  '/api/admin/facilitation-sync': 'netlify/functions/admin-facilitation-sync.mts',
 };
 
-assert.equal(pack.version, '0.6.0', 'Update the package version with the release');
+assert.equal(pack.version, '0.7.0', 'Update the package version with the release');
 for (const [name, path] of Object.entries(requiredRoutes)) {
   assert.ok(existsSync(join(root, path)), `Missing API function: ${path}`);
   assert.ok(read(path).includes(`path: '${name}'`), `Incorrect route for ${path}`);
 }
-for (const flag of ['APPLICATIONS_OPEN', 'PRIVACY_APPROVED', 'RETENTION_PROCESS_ACTIVE', 'ADMIN_DASHBOARD_ENABLED', 'VITE_ADMIN_LOGIN_ENABLED']) {
+for (const flag of ['APPLICATIONS_OPEN', 'PRIVACY_APPROVED', 'RETENTION_PROCESS_ACTIVE', 'ADMIN_DASHBOARD_ENABLED', 'VITE_ADMIN_LOGIN_ENABLED', 'FACILITATION_CLOUD_SYNC_ENABLED']) {
   assert.match(env, new RegExp(`^${flag}=false$`, 'm'), `Default ${flag} must be false`);
 }
 for (const entry of ['node_modules/', 'dist/', '.env', '.env.local']) {
@@ -32,7 +33,7 @@ for (const entry of ['node_modules/', 'dist/', '.env', '.env.local']) {
 for (const header of ['Content-Security-Policy', 'X-Frame-Options', 'X-Content-Type-Options']) {
   assert.ok(netlify.includes(header), `Missing response header: ${header}`);
 }
-for (const path of ['supabase/migrations/202610270001_applications.sql', 'supabase/migrations/202610280001_admin_dashboard.sql']) {
+for (const path of ['supabase/migrations/202610270001_applications.sql', 'supabase/migrations/202610280001_admin_dashboard.sql', 'supabase/migrations/202610280002_facilitation_cloud.sql']) {
   assert.ok(existsSync(join(root, path)), `Missing migration: ${path}`);
 }
 const migrations = read('supabase/migrations/202610270001_applications.sql') + read('supabase/migrations/202610280001_admin_dashboard.sql');

@@ -1811,3 +1811,7 @@ a:focus-visible,button:focus-visible {
 .facilitation-note svg{flex:none;margin-top:4px}
 @media(max-width:800px){.facilitation-toolkit{grid-template-columns:1fr}.facilitation-metadata{grid-template-columns:1fr 1fr}}
 @media(max-width:520px){.facilitation-metadata{grid-template-columns:1fr}.facilitation-management-heading{flex-direction:column}.facilitation-tool button{width:100%}}
+
+/* v0.7.0 optional cloud backup controls */
+.facilitation-cloud {margin-top:1.25rem;}
+.facilitation-cloud-actions {display:flex;gap:.75rem;flex-wrap:wrap;margin:1rem 0;}
