@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { BookOpenText, ClipboardCopy, Download, FilePenLine, Sparkles } from 'lucide-react';
 import { facilitationSessions } from '../data/facilitation-content';
-import { createChatGPTPrompt, createFacilitationPlan, type GuestStatus, type SessionEmphasis } from '../lib/facilitation-planner';
+import { createChatGPTPrompt, createFacilitationPlan, type GuestStatus, type SessionEmphasis, type PlanOptions } from '../lib/facilitation-planner';
 
 type ClipboardState = 'idle' | 'plan' | 'prompt' | 'error';
 export default function FacilitationDesk() {
@@ -11,6 +11,7 @@ export default function FacilitationDesk() {
   const [attendance, setAttendance] = useState('20');
   const [previousCommitment, setPreviousCommitment] = useState('');
   const [draft, setDraft] = useState('');
+  const [draftOptions, setDraftOptions] = useState<PlanOptions | null>(null);
   const [copied, setCopied] = useState<ClipboardState>('idle');
   const [error, setError] = useState('');
   const options = { sessionId, guest, emphasis, attendance: Number(attendance), previousCommitment };
@@ -20,7 +21,8 @@ export default function FacilitationDesk() {
     if (!Number.isInteger(Number(attendance)) || Number(attendance) < 1 || Number(attendance) > 80) {
       setError('Enter an expected attendance from 1 to 80.'); return;
     }
-    setDraft(createFacilitationPlan(options)); setError(''); setCopied('idle');
+    const selected = { ...options };
+    setDraft(createFacilitationPlan(selected)); setDraftOptions(selected); setError(''); setCopied('idle');
   }
   async function copyText(text: string, kind: ClipboardState) {
     if (!text) return;
@@ -32,10 +34,10 @@ export default function FacilitationDesk() {
     const file = new Blob([draft], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(file);
     const a = document.createElement('a');
-    a.href = url; a.download = `men-in-hr-${sessionId}-facilitation-plan.md`;
+    a.href = url; a.download = `men-in-hr-${draftOptions?.sessionId || sessionId}-facilitation-plan.md`;
     a.click(); URL.revokeObjectURL(url);
   }
-  const copyPrompt = () => void copyText(createChatGPTPrompt(options, draft), 'prompt');
+  const copyPrompt = () => { if (draftOptions) void copyText(createChatGPTPrompt(draftOptions, draft), 'prompt'); };
 
   return <section className="facilitation-desk" aria-label="Personal facilitation planner">
     <div className="facilitation-intro">

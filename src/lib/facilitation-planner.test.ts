@@ -17,6 +17,11 @@ describe('personal facilitation planner', () => {
       }
     }
   });
+  it('does not invent a schedule for preliminary engagement meetings', () => {
+    const p=createFacilitationPlan({sessionId:'preliminary-1',guest:'no',emphasis:'balanced',attendance:20});
+    expect(p).toContain('date and time to be confirmed');
+    expect(p).not.toContain('Thursdays at 8:00 pm');
+  });
   it('gives both complete fallback agendas for unconfirmed guests', () => {
     const plan = createFacilitationPlan({sessionId:'week-2',guest:'uncertain',emphasis:'balanced',attendance:20});
     expect(plan).toContain('Plan A: guest attends');

@@ -58,7 +58,8 @@ export function createFacilitationPlan(options: PlanOptions): string {
   const t = sessionById(options.sessionId);
   const count = Math.max(1, Math.min(80, Math.round(Number.isFinite(options.attendance) ? options.attendance : 20)));
   const previous = (options.previousCommitment || '').trim().slice(0, 180);
-  const header = `# Men in HR — ${t.label}: ${t.title}\n\n**Format:** 60-minute virtual session; Thursdays at 8:00 pm EAT (confirm the actual date).  **Expected participants:** ${count}.\n**Facilitator:** Morris Njeru.  **Guest:** ${options.guest === 'confirmed' ? 'confirmed (verify speaker and availability)' : options.guest === 'uncertain' ? 'not yet confirmed; both agenda options provided' : 'no guest expected'}.\n\n## 1. Session goal\n${t.goal}`;
+  const meetingTime = options.sessionId.startsWith('preliminary-') ? '60-minute preliminary virtual engagement (date and time to be confirmed)' : '60-minute virtual session; Thursdays at 8:00 pm EAT (confirm the actual date)';
+  const header = `# Men in HR — ${t.label}: ${t.title}\n\n**Format:** ${meetingTime}.  **Expected participants:** ${count}.\n**Facilitator:** Morris Njeru.  **Guest:** ${options.guest === 'confirmed' ? 'confirmed (verify speaker and availability)' : options.guest === 'uncertain' ? 'not yet confirmed; both agenda options provided' : 'no guest expected'}.\n\n## 1. Session goal\n${t.goal}`;
   const guestAgenda = options.guest === 'confirmed' || options.guest === 'uncertain';
   const agendas = options.guest === 'uncertain'
     ? `## 2. Timed agenda — Plan A: guest attends\n${formatAgenda(makeAgenda(options,true))}\n\n### Plan B: guest unavailable\n${formatAgenda(makeAgenda(options,false))}`
