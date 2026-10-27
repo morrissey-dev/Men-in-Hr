@@ -26,3 +26,20 @@
 - [ ] Implement server-side validation and anti-abuse controls.
 - [ ] Confirm anonymous users cannot read or list applications.
 - [ ] Test closed cohorts, duplicate submissions and safe error handling.
+
+## Milestone 2 — Application service
+- [x] Full validation of required fields, allowed interests, age confirmation, consent and size caps.
+- [x] Closed-by-default behavior; privacy/retention approvals required before opening.
+- [x] Cohort-specific open/closed lookup before accepting POST.
+- [x] Invalid origin, invalid fields and invalid Turnstile rejected in offline tests.
+- [x] Valid submission reaches only server-side Supabase REST, without token leakage.
+- [x] Duplicate submission returns non-enumerating generic result.
+- [x] Source files present; original seven pages preserved.
+- [ ] Run `npm install && npm run build && npm run test` after npm registry connectivity is restored.
+- [ ] Test real Netlify function routes against a non-production Supabase project.
+- [ ] Verify Netlify rate-limiting configuration works in deployed environment.
+- [ ] Confirm direct anonymous and authenticated DB access is denied, in a live database.
+- [ ] Verify deletion operating procedure, data processing and transfer safeguards before live launch.
+- [ ] Record approved responsible organisation, retention/contact information and privacy notice.
+- [ ] Test end-to-end submission, duplicates, disabled cohort and CAPTCHA expiry.
+- [ ] Review the form at mobile screen widths and using screen readers.

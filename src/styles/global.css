@@ -1646,3 +1646,61 @@ a:focus-visible,button:focus-visible {
   }
 }
 
+
+/* Milestone 2: student application flow */
+.apply-layout{display:grid;grid-template-columns:minmax(220px,.75fr) minmax(0,1.5fr);gap:46px;align-items:start}
+.apply-sidebar{display:flex;flex-direction:column;gap:24px}
+.apply-sidebar__panel{margin-top:20px;background:#eef3e9;border:1px solid #dee8d7;border-radius:15px;padding:30px;color:#275741}
+.apply-sidebar__panel h2{font:normal 31px/1.2 Georgia,serif;margin:19px 0 9px;color:#234539}
+.apply-sidebar__panel p,.apply-sidebar__panel li{font-size:13px;line-height:1.85;color:#54705d}
+.apply-sidebar__panel ul{padding-left:19px;margin-bottom:0}
+.apply-sidebar__panel li{padding:3px 0}
+.apply-privacy{display:flex;align-items:flex-start;gap:12px;color:#6b7c70;font-size:12px;line-height:1.7}
+.apply-privacy svg{flex-shrink:0;color:#567b5c}
+.apply-privacy p{margin:0}
+.application-state{min-height:370px;background:#f1f4ed;border:1px solid #e0e8dc;border-radius:15px;padding:40px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:15px}
+.application-state h2{font:normal 36px/1.2 Georgia,serif;letter-spacing:-.035em;margin:6px 0}
+.application-state p{font-size:14px;line-height:1.8;max-width:560px;color:#617668;margin:0}
+.application-state .field-hint{font-size:12px}
+.application-state .button{margin-top:17px}
+.application-state__icon{width:60px;height:60px;display:grid;place-items:center;border-radius:14px;background:#dfebd9;color:#477556}
+.application-form{border:1px solid #dfe6dc;background:white;border-radius:15px;padding:36px;box-shadow:0 6px 35px rgba(28,54,43,.035)}
+.form-intro{border-bottom:1px solid #e4e8e3;padding-bottom:25px;margin-bottom:28px}
+.form-intro h2{font:normal 38px/1.14 Georgia,serif;letter-spacing:-.04em;margin:12px 0 8px}
+.form-intro p{font-size:13px;line-height:1.75;color:#67796c;margin:0}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:21px;margin-bottom:28px}
+.form-field{display:flex;flex-direction:column;gap:8px;margin-bottom:21px}
+.form-grid .form-field{margin-bottom:0}
+.form-field label,.interest-fieldset legend{font-size:13px;font-weight:750;color:#27483b}
+.form-field input,.form-field select,.form-field textarea{width:100%;background:#fcfcfa;border:1px solid #cfdad0;border-radius:7px;padding:12px 13px;font:inherit;font-size:14px;color:#1b3630;min-height:47px}
+.form-field textarea{resize:vertical}
+.form-field input:focus,.form-field select:focus,.form-field textarea:focus{outline:2px solid #719664;outline-offset:2px}
+.form-field [aria-invalid=true]{border-color:#aa3c3c}
+.form-field input::placeholder,.form-field textarea::placeholder{color:#86948a}
+.field-error{display:block;font-size:12px;line-height:1.45;color:#a32828;margin-top:4px}
+.field-hint{font-size:12px;line-height:1.7;color:#718175}
+.optional-label{font-size:11px;font-weight:normal;color:#68796d}
+.interest-fieldset{border:0;padding:0;margin:7px 0 30px;min-width:0}
+.interest-fieldset legend{margin-bottom:5px}
+.interest-fieldset>p{font-size:12px;color:#718175;margin:0 0 14px;line-height:1.6}
+.interest-options{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.interest-option{display:flex;align-items:start;gap:10px;border:1px solid #d8e2d6;border-radius:8px;padding:14px;cursor:pointer;transition:background .15s}
+.interest-option.selected{border-color:#6f946f;background:#f1f7ed}
+.interest-option:has(input:disabled){opacity:.6;cursor:not-allowed}
+.interest-option input{margin:4px 0 0;flex-shrink:0;accent-color:#315a43}
+.interest-option strong{display:block;font-size:12px;line-height:1.55;color:#284e3e;font-weight:700}
+.interest-option small{display:block;color:#708375;font-size:11px;margin-top:4px}
+.consent-panel{background:#f1f5ed;border:1px solid #dde8d8;border-radius:10px;padding:23px;margin:25px 0}
+.consent-panel h3{margin:0 0 10px;font-size:17px}
+.consent-panel>p{font-size:12px;line-height:1.8;color:#627568;margin:0 0 18px}
+.consent-panel a{text-decoration:underline;text-underline-offset:2px}
+.checkbox-row{display:flex;align-items:flex-start;gap:11px;margin-top:14px;cursor:pointer;color:#345745;font-size:12px;line-height:1.75}
+.checkbox-row input{margin:4px 0 0;flex-shrink:0;accent-color:#315a43;width:16px;height:16px}
+.bot-trap{position:absolute;left:-99999px;width:1px;height:1px;overflow:hidden}
+.turnstile-wrap{margin:23px 0}
+.turnstile-wrap .field-hint{margin:9px 0}
+.submission-message{background:#fff0eb;border-left:3px solid #ad563b;padding:12px 14px;border-radius:5px;font-size:13px;line-height:1.6}
+.application-submit{min-height:50px;display:flex;align-items:center;gap:12px;justify-content:center;width:100%}
+.application-submit:disabled{opacity:.6;cursor:wait}
+@media(max-width:820px){.apply-layout{grid-template-columns:1fr;gap:33px}.apply-sidebar__panel{display:none}}
+@media(max-width:600px){.application-form{padding:23px 17px}.form-grid,.interest-options{grid-template-columns:1fr}.form-intro h2{font-size:32px}.application-state{padding:30px 24px}.application-state h2{font-size:31px}}
