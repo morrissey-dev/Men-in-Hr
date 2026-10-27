@@ -5,7 +5,7 @@ import { adminSession, adminApplications, adminCohorts } from '../netlify/lib/ad
 const uid = '72f9a302-1391-4e87-a217-77b5e16b5e1d';
 const cohortId = '9dbeaa23-e643-4e87-b46e-f3785fe9aa2f';
 const applicationId = '25e9ae25-d7dc-4d59-9c35-e28529cc5d0d';
-const allKeys = ['ADMIN_DASHBOARD_ENABLED','SITE_ORIGIN','SUPABASE_URL','SUPABASE_SECRET_KEY','SUPABASE_PUBLISHABLE_KEY', 'APPLICATIONS_OPEN','PRIVACY_APPROVED','RETENTION_PROCESS_ACTIVE','TURNSTILE_SITE_KEY','TURNSTILE_SECRET_KEY','PRIVACY_CONTROLLER_NAME','PRIVACY_CONTACT_EMAIL','APPLICATION_RETENTION_DAYS','APPLICATION_COHORT_SLUG'];
+const allKeys = ['ADMIN_DASHBOARD_ENABLED','SITE_ORIGIN','SUPABASE_URL','SUPABASE_SECRET_KEY','SUPABASE_PUBLISHABLE_KEY', 'APPLICATIONS_OPEN','PRIVACY_APPROVED','RETENTION_PROCESS_ACTIVE','TURNSTILE_SITE_KEY','TURNSTILE_SECRET_KEY','PRIVACY_CONTROLLER_NAME','PRIVACY_CONTACT_EMAIL','APPLICATION_RETENTION_DAYS','APPLICATION_COHORT_SLUG','FACILITATOR_USER_ID'];
 const initial = Object.fromEntries(allKeys.map(key => [key, process.env[key]]));
 const originalFetch = globalThis.fetch;
 function configure() {
@@ -68,12 +68,12 @@ test('existing Supabase user without approved active role is rejected', async()=
 });
 
 test('role is determined by server membership and exposed minimally', async()=>{
-  configure(); providers({role:'coordinator'});
-  assert.deepEqual(await (await adminSession(req('session'))).json(), {role:'coordinator'});
+  configure(); providers({role:'coordinator',canFacilitate:false});
+  assert.deepEqual(await (await adminSession(req('session'))).json(), {role:'coordinator',canFacilitate:false});
 });
 
 test('coordinator cannot create or toggle cohorts', async()=>{
-  configure(); const calls=providers({role:'coordinator'});
+  configure(); const calls=providers({role:'coordinator',canFacilitate:false});
   assert.equal((await adminCohorts(req('cohorts','POST',{slug:'cohort-2',name:'Cohort Two'}))).status,403);
   assert.equal((await adminCohorts(req('cohorts','PATCH',{cohortId,applicationsOpen:false}))).status,403);
   assert.equal(calls.filter(c=>c.uri.includes('/rpc/')).length,0);
@@ -161,4 +161,20 @@ test('sensitive settings and user tokens are never copied into success responses
   configure(); providers();
   const text=await (await adminSession(req('session'))).text();
   assert.ok(!text.includes('server-only-key') && !text.includes('t'.repeat(32)));
+});
+
+
+test('facilitation tab entitlement is disabled without explicit user allowlist', async()=>{
+  configure(); delete process.env.FACILITATOR_USER_ID; providers({role:'owner'});
+  assert.deepEqual(await (await adminSession(req('session'))).json(), {role:'owner',canFacilitate:false});
+});
+
+test('only the matching approved owner can access personal facilitation desk', async()=>{
+  configure(); process.env.FACILITATOR_USER_ID=uid; providers({role:'owner'});
+  assert.deepEqual(await (await adminSession(req('session'))).json(), {role:'owner',canFacilitate:true});
+  providers({role:'coordinator'});
+  assert.deepEqual(await (await adminSession(req('session'))).json(), {role:'coordinator',canFacilitate:false});
+  process.env.FACILITATOR_USER_ID='fc61a6d0-491b-498b-9abb-48bbf4fc3146';
+  providers({role:'owner'});
+  assert.deepEqual(await (await adminSession(req('session'))).json(), {role:'owner',canFacilitate:false});
 });

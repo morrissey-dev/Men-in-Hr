@@ -116,3 +116,7 @@ git commit -m "feat: add role-protected mentorship administration"
 ```
 
 No push to GitHub has been made. The GitHub remote and final stakeholder approvals are not yet configured.
+
+## v0.5.0 — Personal Facilitation Desk
+
+Inside `/admin`, the personal facilitator (identified by server-side `FACILITATOR_USER_ID` and approved `owner` role) can generate and edit 60-minute session plans for both preliminary engagements and all eight mentorship weeks. Plans support guest/no-guest alternatives, low-data participation, previous-commitment check-ins, Markdown export and a ChatGPT Plus-compatible enhancement prompt. The feature is **closed by default**, needs the live admin setup, has no AI API costs, and does not store session notes on the server. See `docs/facilitation-desk.md`.

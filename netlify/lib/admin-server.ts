@@ -79,7 +79,12 @@ export async function adminSession(request: Request): Promise<Response> {
   if (request.method !== 'GET') return failure(405, 'Method not allowed.');
   const check = await authorize(request);
   if (check.error) return check.error;
-  return json({ role: check.admin.role });
+  // Personal-only feature gate: the authenticated Supabase user ID must match the
+  // approved facilitator UUID. Having an admin role alone is not sufficient.
+  const facilitatorId = process.env.FACILITATOR_USER_ID?.trim() || '';
+  const canFacilitate = check.admin.role === 'owner'
+    && UUID.test(facilitatorId) && check.admin.userId.toLowerCase() === facilitatorId.toLowerCase();
+  return json({ role: check.admin.role, canFacilitate });
 }
 
 export async function adminApplications(request: Request): Promise<Response> {
