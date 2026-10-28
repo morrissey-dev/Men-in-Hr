@@ -1,62 +1,102 @@
-# Men in HR Connect — Connect PostgreSQL through Supabase (v0.7.0)
+# Men in HR Connect — PostgreSQL and Netlify setup (v0.7.0)
 
-**Current state:** Source code is connected to GitHub, but NO live database has been connected, SQL migrations have not been applied, and Cloud Backup / Admin Login / Student Registration remain closed until setup is verified. A successful GitHub build is NOT proof of a working live database.
+## Current verified state
 
-## Why Supabase?
+- Supabase project: `men-in-hr-connect` (PostgreSQL 17, Europe/Paris).
+- Project URL: `https://rcxxzgzwucgppoavguwl.supabase.co`.
+- All three migrations have been applied: applications, admin dashboard/audit records, and private facilitation cloud backup.
+- Row Level Security is enabled on all six application tables. Public/authenticated direct access is intentionally not granted; server functions use the server-side Supabase secret.
+- Cohort `cohort-1` is closed. There are no student applications or cloud backups.
+- One verified Supabase Auth user has the active `owner` role in `public.admin_members`.
+- Netlify is **not deployed yet**. The website, OTP sign-in, and cloud backup have not passed live end-to-end testing.
+- `ADMIN_DASHBOARD_ENABLED`, `VITE_ADMIN_LOGIN_ENABLED`, and `FACILITATION_CLOUD_SYNC_ENABLED` must remain off until the steps below are completed. Student registration remains closed.
 
-Supabase provides managed PostgreSQL, Supabase Auth (email OTP), a SQL editor and REST APIs. This project connects to the API over HTTPS from Netlify serverless functions; **there is no need to expose a raw PostgreSQL connection string in the React browser**. Do NOT set the database password in Netlify for these routes.
+A successful GitHub build does not prove a live Netlify/Supabase integration works.
 
-## Operator walkthrough (do this in order)
+## Step 1 — Deploy the public website to Netlify
 
-1. Create a separate project at https://supabase.com/dashboard. Give it a name like `men-in-hr-connect-staging`; choose a nearby available region. Safeguard the database password in a password manager. Never share it in chat or commit it.
-2. Wait until the database is ready. Open SQL Editor and apply these files **one at a time**, in this precise order:
-   - `supabase/migrations/202610270001_applications.sql`
-   - `supabase/migrations/202610280001_admin_dashboard.sql`
-   - `supabase/migrations/202610280002_facilitation_cloud.sql`
-3. In **Authentication → Users**, manually provision your own authorised admin user. In Authentication → Email Templates, set the Magic Link/OTP template to include `{{ .Token }}` for 6-digit sign-in codes. For testing, check that your email address is permitted by Supabase's default email sender restrictions; production use may require custom SMTP.
-4. Copy **only your Supabase Auth user UUID** (the UUID shown for the new user, NOT your email or password). Then execute, replacing `<YOUR_AUTH_UUID>` in the SQL editor:
+1. Open https://app.netlify.com and sign in using GitHub.
+2. Choose **Add new project** (or **Add new site**) → **Import an existing project** → **GitHub**.
+3. Authorise Netlify to access the repository if prompted, then select `morrissey-dev/Men-in-Hr`.
+4. Select production branch `main`.
+5. Confirm build command `npm run build` and publish directory `dist`. The repository's `netlify.toml` already defines these settings and security headers; Netlify Functions are under `netlify/functions`.
+6. Deploy the site. **For this first public-only deployment, do not add secret environment variables and do not enable any feature flags.** Public pages are designed to build without a live admin connection.
+7. Once the deploy succeeds, copy the exact HTTPS site origin (for example, `https://your-site-name.netlify.app`, with no trailing slash). Keep the URL private if this is a staging site.
 
-```sql
-insert into public.admin_members (user_id, role, active)
-values ('<YOUR_AUTH_UUID>', 'owner', true)
-on conflict (user_id) do update set role=excluded.role, active=true;
-```
+Verify `/`, `/about`, `/programme`, `/events`, `/apply`, `/admin`, and `/privacy` load on desktop and mobile. The `/apply` route must say applications are closed. The `/admin` route must not allow sign-in while the flags are off.
 
-5. In the Supabase project's **Connect / Settings → API Keys** screens, find the Project URL, publishable (`sb_publishable_...`) key and secret (`sb_secret_...`) key. **Never paste the secret key into ChatGPT, GitHub, Discord or screenshots.** The publishable key is used by the browser; secret goes only to Netlify's Functions-scope environment variables.
-6. In Netlify site → **Project configuration → Environment variables**, add the following. Use your own values and actual Netlify HTTPS origin (no trailing slash). Set environment scope so server-only secrets are accessible to Functions. Then trigger a new Netlify deploy for the changes to take effect.
+## Step 2 — Prepare Supabase email OTP
 
-| Variable | Value | Exposure |
+In Supabase **Authentication → Email Templates**, configure the Magic Link/email template to send the numerical OTP token using `{{ .Token }}`. The frontend verifies the code with Supabase `verifyOtp`; the default confirmation link alone is not the expected user flow. Check email delivery/rate limits before enabling the admin UI. The existing user is already created and allowlisted as `owner`; do not create another user unless needed.
+
+The current Supabase security scan also reported leaked-password protection as disabled. The admin UI uses email OTP, but review and enable the appropriate Auth protections before any broader production rollout.
+
+## Step 3 — Configure Netlify environment variables
+
+Open the deployed Netlify site → **Project configuration / Site configuration → Environment variables** (labels can vary). Add these values from the Supabase dashboard. Do not paste secret keys into ChatGPT, GitHub, source files, screenshots, or any `VITE_*` variable.
+
+### Server-side variables
+
+| Variable | Value | Initial setting |
 |---|---|---|
-| `SUPABASE_URL` | Project URL | Server |
-| `SUPABASE_SECRET_KEY` | `sb_secret_...` | **Server only** |
-| `SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_...` | Server |
-| `SITE_ORIGIN` | Live Netlify HTTPS site URL | Server |
-| `ADMIN_DASHBOARD_ENABLED` | `true` after testing | Server |
-| `VITE_SUPABASE_URL` | Project URL | Public build |
-| `VITE_SUPABASE_PUBLISHABLE_KEY` | `sb_publishable_...` | Public build |
-| `VITE_ADMIN_LOGIN_ENABLED` | `true` after testing | Public build |
-| `FACILITATOR_USER_ID` | Your approved Auth UUID | **Server only** |
-| `FACILITATION_CLOUD_SYNC_ENABLED` | `false` until backup checks pass; then `true` | Server only |
+| `SUPABASE_URL` | `https://rcxxzgzwucgppoavguwl.supabase.co` | Set |
+| `SUPABASE_SECRET_KEY` | Supabase secret key beginning `sb_secret_` | Set; server only |
+| `SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key beginning `sb_publishable_` | Set |
+| `SITE_ORIGIN` | Exact deployed Netlify HTTPS origin, no trailing slash | Set after first deploy |
+| `FACILITATOR_USER_ID` | Your own Auth user UUID from Authentication → Users | Server only |
+| `ADMIN_DASHBOARD_ENABLED` | `false` | Keep off during setup |
+| `FACILITATION_CLOUD_SYNC_ENABLED` | `false` | Keep off during setup |
+| `APPLICATIONS_OPEN` | `false` | Keep closed |
+| `PRIVACY_APPROVED` | `false` | Keep closed |
+| `RETENTION_PROCESS_ACTIVE` | `false` | Keep closed |
 
-**Keep `APPLICATIONS_OPEN=false`, `PRIVACY_APPROVED=false`, `RETENTION_PROCESS_ACTIVE=false`** until your institution's approved data-controller, privacy notice, retention/deletion process and Turnstile protections are configured and tested. Your administrator login does not require student intake to open.
+### Frontend build variables
 
-7. Redeploy. At `/admin`, request a code, sign in, confirm `My Facilitation Desk` appears only for your UUID. After cloud-sync testing is approved, change the final sync flag to `true`, redeploy, then use **Check cloud copy → Upload local plans → Check cloud copy**. Do not use real student personal data in tests.
-8. Security acceptance: without token → `401` on `/api/admin/session`; wrong user → `403`; admin but not facilitator → `403` on `/api/admin/facilitation-sync`; feature flag off → `503`; first empty cloud backup → version/revision 0; upload → revision 1; stale revision → `409`. All cloud restore/upload actions require explicit user confirmation. Verify a second device only after these checks.
+| Variable | Value | Initial setting |
+|---|---|---|
+| `VITE_SUPABASE_URL` | Same Supabase project URL | Set |
+| `VITE_SUPABASE_PUBLISHABLE_KEY` | Supabase publishable key beginning `sb_publishable_` | Set |
+| `VITE_ADMIN_LOGIN_ENABLED` | `false` | Keep off during setup |
 
-## Queries for checking schema (read-only)
+The publishable key is intended for the browser; it does not replace server-side authorisation. The `SUPABASE_SECRET_KEY` must never be put into frontend code. Set environment scope so server-only keys are available to Netlify Functions, not exposed to the browser.
+
+Save changes and trigger a new deploy so the build-time `VITE_*` values are included.
+
+## Step 4 — Enable and test owner login (only after the configuration is ready)
+
+1. Confirm `SITE_ORIGIN` exactly matches the deployed origin.
+2. Confirm Supabase email OTP delivers a numerical code and the Auth user email is verified.
+3. Set `ADMIN_DASHBOARD_ENABLED=true` and `VITE_ADMIN_LOGIN_ENABLED=true`, then redeploy.
+4. Open `/admin`, request a code, and sign in. Confirm the session endpoint authorises the account and that **My Facilitation Desk** appears only for the approved owner UUID.
+5. Check `/api/admin/session` returns `401` without a token, rejects an unapproved user, and succeeds only for an active administrator.
+6. If any check fails, turn both admin flags off and redeploy while debugging.
+
+## Step 5 — Enable manual cloud backup only after its tests pass
+
+Keep `FACILITATION_CLOUD_SYNC_ENABLED=false` until you verify the no-token response, owner-only authorisation, exact Origin validation, feature-off response, first empty cloud copy, successful upload, and stale-revision rejection. Then enable the server-side flag and redeploy. Use the explicit **Check cloud copy → Upload local plans → Check cloud copy** controls to test; the feature is manual, not automatic real-time sync.
+
+Only store programme-level notes in the facilitator backup. Do not store student names, individual reflections, private disclosures, health/financial details, passwords or other sensitive personal data.
+
+## Student registration stays closed
+
+Do not set `APPLICATIONS_OPEN=true`, `PRIVACY_APPROVED=true`, or `RETENTION_PROCESS_ACTIVE=true` merely to test deployment. Before collecting real student data, obtain the institution's approval for the data controller, privacy notice/lawful basis, minimum fields, approved retention period and an actual tested deletion process. Configure Cloudflare Turnstile for the approved domain and test the entire intake flow using synthetic records. Enabling the retention flag alone does not delete records.
+
+## Read-only verification queries
+
+Run in the Supabase SQL editor:
 
 ```sql
-select tablename, rowsecurity from pg_tables
-where schemaname='public' and tablename in ('applications','admin_members','facilitation_workspaces');
+select tablename, rowsecurity
+from pg_tables
+where schemaname = 'public'
+order by tablename;
+
+select slug, applications_open
+from public.cohorts;
+
 select count(*) as student_applications from public.applications;
-select count(*) as facilitation_backups from public.facilitation_workspaces;
+select count(*) as authorised_admins from public.admin_members where active = true;
+select count(*) as facilitator_backups from public.facilitation_workspaces;
 ```
 
-## Limitations
-
-- The SQL migrations and server code are PREPARED, not applied or integrated with your real project yet.
-- Only the approved admin's cloud copy is supported; no shared facilitator library or student portal yet.
-- Cloud backup is manual, not real-time auto-sync. Saving locally does not upload to Supabase.
-- Cloud backups are programme-level notes only. Do not record names, individual comments, health/financial information, personal secrets or private student disclosures.
-- SQL roles and production SMTP should be reviewed in your actual Supabase project before collecting real data.
-- Run `npm run test:core`, `npm run test`, `npm run build` in GitHub CI, then use an approved staging deployment for live end-to-end tests.
+Expected before launch: `cohort-1` closed, zero applications, one active authorised owner, and zero backups until you perform the first explicit upload.

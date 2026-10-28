@@ -1,6 +1,6 @@
 # Men in HR Connect
 
-**Version 0.4.0 — public website + gated student applications + gated coordinator dashboard** for the Men in HR mentorship initiative being developed within JKUAT HRSA.
+**Version 0.7.0 — public website + gated student applications + administrator dashboard + private facilitation workspace** for the Men in HR mentorship initiative being developed within JKUAT HRSA.
 
 ## Milestone 4 — deployment readiness (new)
 
@@ -8,7 +8,8 @@
 - Dependency-free `npm run verify:release` checks API routes, migrations, closed-by-default flags, security headers and secret exclusions.
 - Read-only staging checks via `npm run smoke:staging -- https://YOUR-TEST-SITE.netlify.app` (only on a closed staging site; no student information).
 - Detailed [`deployment runbook`](docs/deployment-runbook.md) and [`go-live checklist`](docs/go-live-checklist.md).
-- **NOT deployed:** Supabase, Netlify, retention controls and live authentication remain unconfigured.
+- **Supabase is provisioned:** all three database migrations are applied; Cohort 1 is closed, and the approved owner account is allowlisted.
+- **Netlify is not deployed yet.** Website hosting, live authentication, and cloud backup are not activated. Student registration remains closed.
 
 ## What works now
 
@@ -31,11 +32,11 @@
 - Supabase PostgreSQL migration for cohorts and applications. RLS enabled; anonymous and authenticated table privileges revoked; private secret stored server-side only.
 - A duplicate email for the same cohort receives a generic confirmation rather than revealing whether it already exists.
 - The Privacy page documents the current workflow and conditionally shows approved contact and retention information when registration is enabled.
-- Thirty-two offline Node tests (17 new admin checks + 15 application checks) for validation and server logic. **Applications stay CLOSED by default**, including on static Vite previews.
+- Forty-one backend core tests plus frontend unit tests run through GitHub Actions for validation and server logic. **Applications stay CLOSED by default**, including on static Vite previews.
 
 ## Important status
 
-**This is implementation source code, not a live registration service; the full production build still needs verification after dependencies can be installed.** The application cannot store real student data until institutional approval, a Supabase project, a configured Netlify deployment and anti-abuse safeguards are in place. No database project, privacy email, verification keys or authorised coordinator was invented.
+**The public website has not been deployed to Netlify yet.** The Supabase project is connected and its three migrations have been applied; one owner account is authorised. Live website hosting, OTP sign-in, cloud backup, and student registration still require Netlify setup and end-to-end verification. No real student applications or facilitator backups have been stored.
 
 ## Run website locally
 
@@ -57,12 +58,12 @@ npm run test:core   # 32 offline registration/admin tests on Node 22+
 
 ## Activate secure student applications — NOT required for visual preview
 
-1. Get written confirmation of the programme's authorised operator, data controller, privacy contact, lawful basis/consent notice, approved collection fields, retention period, actual data deletion procedure and any necessary Kenya/institutional cross-border processing review.
-2. Create a **dedicated** Supabase project. Run the file `supabase/migrations/202610270001_applications.sql` in the Supabase SQL editor. Verify cohorts and applications are PRIVATE and that anonymous and authenticated roles have no access. Keep the initial cohort's `applications_open = false`.
-3. Configure Cloudflare Turnstile with the site's approved hostname. Obtain its site key and secret key. Server-side verification is mandatory.
-4. Connect the repository to Netlify. Configure the server-side environment variables shown in `.env.example` using Netlify's environment settings (do not commit real values). Configure `SITE_ORIGIN` to exactly match the application's public HTTPS origin. Confirm Netlify functions are deployed at `/api/application-status` and `/api/applications`.
-5. Run integration checks: malformed form -> 400, wrong Origin -> 403, invalid Turnstile -> 400, closed cohort -> 503, valid application -> generic 202, duplicate application -> generic 202, and direct anonymous Supabase reads -> denied. Review privacy notice and real mobile-device accessibility. Enable the approved retention/deletion operating process and document the person responsible.
-6. Only **after** approvals and tests, update the cohort in Supabase with `update public.cohorts set applications_open = true where slug = 'cohort-1';`, set `PRIVACY_APPROVED=true`, `RETENTION_PROCESS_ACTIVE=true`, `APPLICATIONS_OPEN=true` in the Netlify server settings and redeploy as necessary. The public status endpoint should return `open: true`. Reverse either switch to close applications immediately.
+1. Deploy the public website from the GitHub `main` branch to Netlify using `npm run build` and `dist`. No secrets are needed for this initial public-only deploy.
+2. The dedicated Supabase project already has all three migrations applied. Verify that `public.cohorts` keeps `cohort-1` closed and that anonymous/authenticated direct table access is denied.
+3. Keep `APPLICATIONS_OPEN=false`, `PRIVACY_APPROVED=false`, and `RETENTION_PROCESS_ACTIVE=false`. Student registration must not be enabled until the institution approves the privacy notice, data controller, collection fields, retention/deletion process and anti-abuse protections.
+4. Configure Cloudflare Turnstile for the actual approved hostname before enabling intake. Set the site key and private secret in the correct frontend/server locations.
+5. Run integration checks on a closed staging deployment: malformed form -> 400, wrong Origin -> 403, invalid Turnstile -> 400, closed cohort -> 503, and anonymous Supabase table reads -> denied. Review the privacy notice and mobile accessibility.
+6. Only after formal approval and security testing, enable the database cohort and all required server-side gates together. Document the person responsible for deletion and test that process before collecting real applications.
 
 **Never** place `SUPABASE_SECRET_KEY`, `TURNSTILE_SECRET_KEY`, personal application data or `.env` values in frontend code, GitHub or screenshots.
 
@@ -115,7 +116,7 @@ git add .
 git commit -m "feat: add role-protected mentorship administration"
 ```
 
-No push to GitHub has been made. The GitHub remote and final stakeholder approvals are not yet configured.
+The project is maintained in `morrissey-dev/Men-in-Hr`; GitHub Actions verifies backend tests, frontend tests, release defaults and the production build. A successful CI build does not replace live Netlify/Supabase integration tests.
 
 ## v0.5.0 — Personal Facilitation Desk
 
@@ -127,6 +128,6 @@ Inside `/admin`, the personal facilitator (identified by server-side `FACILITATO
 
 ## v0.7.0 — Supabase PostgreSQL setup + optional manual cloud backup
 
-A third, owner-only database migration and an admin-only GET/PUT backup endpoint are prepared.
-**The database is not connected and cloud backup is OFF until approved staging setup.**
+The third migration, owner-only private workspace table, and admin-only GET/PUT cloud-backup endpoint are deployed to the Supabase database; the hosting integration is still pending.
+**The database is connected and all three migrations are applied. Netlify is not deployed yet, and cloud backup remains OFF** until the hosting configuration and security tests are complete.
 Follow [PostgreSQL connection instructions](docs/postgres-connection.md). No database password, secret key, or student data belongs in GitHub.

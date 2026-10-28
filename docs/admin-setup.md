@@ -1,6 +1,6 @@
 # Milestone 3: Men in HR Connect administration — operator setup
 
-This dashboard is **not live by default**. It has no demo credentials. Before using it with real student records, obtain written approval from the initiative's designated operator and configure secure hosting, privacy, retention, individual administrator access, and a test deployment. Follow applicable JKUAT rules and Kenya data protection obligations with a qualified institutional adviser where necessary.
+This dashboard is **not live yet** because Netlify has not been deployed/configured. The dedicated Supabase project already has all three migrations applied, and the approved owner Auth account is allowlisted. There are no demo credentials. Before using it with real student records, obtain written approval from the initiative's designated operator and configure secure hosting, privacy, retention, individual administrator access, and a test deployment. Follow applicable JKUAT rules and Kenya data protection obligations with a qualified institutional adviser where necessary.
 
 ## 1. What each role can do
 
@@ -19,23 +19,22 @@ No account self-registration, student/mentor dashboard or public record export e
 
 ## 2. Local smoke test without private services
 
-Run `npm install`, then `npm run dev`. Visit `/admin` and verify **Administration not configured**. Run `npm run test:core` for 32 tests. The plain Vite dev command serves frontend files; it does **not** start Netlify's backend functions.
+Run `npm install`, then `npm run dev`. Visit `/admin` and verify **Administration not configured** while the flags are off. Run `npm run test:core` for the current backend checks. The plain Vite dev command serves frontend files; it does **not** start Netlify's backend functions.
 
 ## 3. Database setup
 
-1. Create a dedicated Supabase test project controlled by the approved operator.
-2. Apply `supabase/migrations/202610270001_applications.sql` FIRST, then `202610280001_admin_dashboard.sql` using the Supabase SQL editor. Confirm RLS and revoked privileges.
-3. In the Supabase Authentication dashboard, create one user manually with the approved institution email, verifying ownership/consent. DO NOT place passwords or personal info in version control.
-4. Get that account's `auth.users.id` UUID from the auth dashboard. Grant the appropriate role in the SQL editor (replace only the UUID):
+1. The dedicated `men-in-hr-connect` Supabase project is already created. All three migrations (`202610270001_applications.sql`, `202610280001_admin_dashboard.sql`, and `202610280002_facilitation_cloud.sql`) have been applied. Confirm RLS and revoked privileges before enabling access.
+2. The approved owner account has already been manually provisioned and allowlisted in `public.admin_members`. Do not create duplicate users or add unapproved accounts. DO NOT place passwords or personal info in version control.
+3. To add another approved coordinator in future, get that user's `auth.users.id` UUID from the auth dashboard and grant only the approved role in the SQL editor (replace only the UUID):
 
 ```sql
 insert into public.admin_members (user_id, role, active)
-values ('REPLACE-WITH-REAL-AUTH-USER-UUID', 'owner', true)
+values ('REPLACE-WITH-REAL-AUTH-USER-UUID', 'coordinator', true)
 on conflict (user_id) do update set role=excluded.role, active=excluded.active;
 ```
 
-5. To appoint another approved coordinator, provision a separate Supabase Auth user and insert their UUID with `role='coordinator'`, `active=true`. Revoke access quickly with `update public.admin_members set active=false where user_id='...'` and revoke Auth sessions as needed.
-6. Verify that neither `anon` nor `authenticated` can directly read `admin_members`, `applications`, `application_decisions`, or invoke any `admin_*` RPC. The server secret remains restricted to server-side functions.
+4. To appoint another approved coordinator, provision a separate Supabase Auth user and insert their UUID with `role='coordinator'`, `active=true`. Revoke access quickly with `update public.admin_members set active=false where user_id='...'` and revoke Auth sessions as needed.
+5. Verify that neither `anon` nor `authenticated` can directly read `admin_members`, `applications`, `application_decisions`, or invoke any `admin_*` RPC. The server secret remains restricted to server-side functions.
 
 ### Email verification template
 
@@ -82,5 +81,5 @@ To allow owner-controlled cohort opening later, complete and enable the **existi
 - The service is configured to verify an access token on EACH request, then query membership on the trusted server.
 - SQL functions insert an audit record in the same transaction as status updates and cohort opening/closing.
 - Supabase RLS is enabled, and public/authenticated direct privileges are removed from private tables and RPCs.
-- No real deployment, credentials, database integration, end-to-end validation, or production build has yet been performed.
+- The production build and automated tests pass in GitHub Actions. Netlify deployment and live end-to-end authentication/security tests are still pending.
 - Opening intake and setting retention policies require governance decisions outside of this codebase.

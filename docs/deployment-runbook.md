@@ -1,6 +1,6 @@
-# Men in HR Connect — v0.4.0 deployment and verification runbook
+# Men in HR Connect — v0.7.0 deployment and verification runbook
 
-**Status: Release-candidate code, NOT live student registration.** The public website can be deployed with the intake/admin flags off. No live provider account, legal approval, hosting account, secret, deployment, or DNS has been connected through this document.
+**Current status:** GitHub CI passes and the dedicated Supabase PostgreSQL project is provisioned with all three migrations applied. The owner account is allowlisted. **Netlify is not deployed yet**; admin login, student registration, and facilitator cloud backup remain disabled. Use [the current PostgreSQL/Netlify guide](postgres-connection.md) for the exact first-deploy and environment-variable steps.
 
 ## A. Verify and build before deployment
 
@@ -39,13 +39,13 @@ To **immediately stop intake**, set `APPLICATIONS_OPEN=false` in Netlify environ
 
 | Test | Result as of v0.4.0 development | Owner to verify |
 | --- | --- | --- |
-| Offline backend tests | 32 passed locally | Developer |
-| Static release gate | Passed locally | Developer |
-| Frontend unit tests | Awaiting npm dependencies | Developer / CI |
-| Production build | Awaiting npm dependencies | Developer / CI |
-| Netlify deploy | Not configured | Approved operator |
-| Supabase integration | Not configured | Approved operator |
-| End-to-end security tests | Not performed | Approved operator + reviewer |
-| Live registration | Disabled | Approved operator |
+| Backend core tests | 41 passed in CI | Developer |
+| Frontend unit tests | Passed in CI | Developer |
+| Production build | Passed in CI | Developer |
+| Netlify deploy | Not yet deployed | Approved operator |
+| Supabase schema | Three migrations applied; six tables with RLS | Developer |
+| Live Netlify/Supabase integration tests | Not yet performed | Approved operator + reviewer |
+| Student registration | Disabled; cohort closed | Approved operator |
+| Facilitator cloud backup | Disabled until live checks pass | Approved operator |
 
 Useful references: https://docs.netlify.com/build/functions/configuration/ , https://supabase.com/docs/guides/getting-started/api-keys .
