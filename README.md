@@ -128,6 +128,6 @@ Inside `/admin`, the personal facilitator (identified by server-side `FACILITATO
 
 ## v0.7.0 — Supabase PostgreSQL setup + optional manual cloud backup
 
-A third, owner-only database migration and an admin-only GET/PUT backup endpoint are prepared.
+The third migration, owner-only private workspace table, and admin-only GET/PUT cloud-backup endpoint are deployed to the Supabase database; the hosting integration is still pending.
 **The database is connected and all three migrations are applied. Netlify is not deployed yet, and cloud backup remains OFF** until the hosting configuration and security tests are complete.
 Follow [PostgreSQL connection instructions](docs/postgres-connection.md). No database password, secret key, or student data belongs in GitHub.
