@@ -19,7 +19,7 @@ No account self-registration, student/mentor dashboard or public record export e
 
 ## 2. Local smoke test without private services
 
-Run `npm install`, then `npm run dev`. Visit `/admin` and verify **Administration not configured**. Run `npm run test:core` for 32 tests. The plain Vite dev command serves frontend files; it does **not** start Netlify's backend functions.
+Run `npm install`, then `npm run dev`. Visit `/admin` and verify **Administration not configured** while the flags are off. Run `npm run test:core` for the current backend checks. The plain Vite dev command serves frontend files; it does **not** start Netlify's backend functions.
 
 ## 3. Database setup
 
@@ -29,12 +29,12 @@ Run `npm install`, then `npm run dev`. Visit `/admin` and verify **Administratio
 
 ```sql
 insert into public.admin_members (user_id, role, active)
-values ('REPLACE-WITH-REAL-AUTH-USER-UUID', 'owner', true)
+values ('REPLACE-WITH-REAL-AUTH-USER-UUID', 'coordinator', true)
 on conflict (user_id) do update set role=excluded.role, active=excluded.active;
 ```
 
-5. To appoint another approved coordinator, provision a separate Supabase Auth user and insert their UUID with `role='coordinator'`, `active=true`. Revoke access quickly with `update public.admin_members set active=false where user_id='...'` and revoke Auth sessions as needed.
-6. Verify that neither `anon` nor `authenticated` can directly read `admin_members`, `applications`, `application_decisions`, or invoke any `admin_*` RPC. The server secret remains restricted to server-side functions.
+4. To appoint another approved coordinator, provision a separate Supabase Auth user and insert their UUID with `role='coordinator'`, `active=true`. Revoke access quickly with `update public.admin_members set active=false where user_id='...'` and revoke Auth sessions as needed.
+5. Verify that neither `anon` nor `authenticated` can directly read `admin_members`, `applications`, `application_decisions`, or invoke any `admin_*` RPC. The server secret remains restricted to server-side functions.
 
 ### Email verification template
 
