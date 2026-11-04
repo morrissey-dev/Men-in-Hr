@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { ArrowLeft, ClipboardList, LockKeyhole, LogOut, RefreshCcw, ShieldCheck, Users } from 'lucide-react';
+import { ArrowLeft, CalendarDays, ClipboardList, LockKeyhole, LogOut, RefreshCcw, ShieldCheck, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { adminAuth, adminLoginAvailable, adminRequest } from '../lib/admin-auth';
 import FacilitationDesk from '../components/FacilitationDesk';
+import AttendanceManagement from '../components/AttendanceManagement';
 
 type Role = 'owner' | 'coordinator';
 type Status = 'pending' | 'approved' | 'declined' | 'withdrawn';
@@ -53,7 +54,7 @@ export default function Admin() {
   const [otp, setOtp] = useState('');
   const [codeSent, setCodeSent] = useState(false);
   const [authBusy, setAuthBusy] = useState(false);
-  const [tab, setTab] = useState<'applications' | 'cohorts' | 'facilitation'>('applications');
+  const [tab, setTab] = useState<'applications' | 'cohorts' | 'attendance' | 'facilitation'>('applications');
   const [cohorts, setCohorts] = useState<Cohort[]>([]);
   const [applications, setApplications] = useState<Application[]>([]);
   const [cohortFilter, setCohortFilter] = useState('');
@@ -167,15 +168,15 @@ export default function Admin() {
       : !role ? <div className="admin-panel admin-splash"><LockKeyhole size={28}/><h2>Private workspace restricted</h2><p role="alert">{authError || 'Your account does not have administrator access.'}</p><button type="button" onClick={signOut} className="button button--outline">Sign out</button></div>
       : <div className="admin-workspace">
         <div className="admin-heading"><div><span className="eyebrow"><i /> PRIVATE WORKSPACE</span><h2>Welcome, coordinator</h2><p>Access level: {role === 'owner' ? 'Platform administrator' : 'Coordinator'}. Changes to application decisions are recorded.</p></div><button className="button button--outline" type="button" onClick={signOut}><LogOut size={16}/> Sign out</button></div>
-        <div className="admin-tabs" role="tablist" aria-label="Administration sections"><button id="tab-applications" role="tab" aria-selected={tab==='applications'} aria-controls="panel-admin" type="button" className={tab==='applications' ? 'active' : ''} onClick={() => setTab('applications')}><ClipboardList size={18}/> Applications</button><button id="tab-cohorts" role="tab" aria-selected={tab==='cohorts'} aria-controls="panel-admin" type="button" className={tab==='cohorts' ? 'active' : ''} onClick={() => setTab('cohorts')}><Users size={18}/> Cohorts</button>{canFacilitate && <button id="tab-facilitation" role="tab" aria-selected={tab==='facilitation'} aria-controls="panel-admin" type="button" className={tab==='facilitation' ? 'active' : ''} onClick={() => setTab('facilitation')}><ClipboardList size={18}/> My Facilitation Desk</button>}</div>
-        <div id="panel-admin" role="tabpanel" aria-labelledby={tab === 'applications' ? 'tab-applications' : tab === 'facilitation' ? 'tab-facilitation' : 'tab-cohorts'}>
+        <div className="admin-tabs" role="tablist" aria-label="Administration sections"><button id="tab-applications" role="tab" aria-selected={tab==='applications'} aria-controls="panel-admin" type="button" className={tab==='applications' ? 'active' : ''} onClick={() => setTab('applications')}><ClipboardList size={18}/> Applications</button><button id="tab-cohorts" role="tab" aria-selected={tab==='cohorts'} aria-controls="panel-admin" type="button" className={tab==='cohorts' ? 'active' : ''} onClick={() => setTab('cohorts')}><Users size={18}/> Cohorts</button><button id="tab-attendance" role="tab" aria-selected={tab==='attendance'} aria-controls="panel-admin" type="button" className={tab==='attendance' ? 'active' : ''} onClick={() => setTab('attendance')}><CalendarDays size={18}/> Attendance</button>{canFacilitate && <button id="tab-facilitation" role="tab" aria-selected={tab==='facilitation'} aria-controls="panel-admin" type="button" className={tab==='facilitation' ? 'active' : ''} onClick={() => setTab('facilitation')}><ClipboardList size={18}/> My Facilitation Desk</button>}</div>
+        <div id="panel-admin" role="tabpanel" aria-labelledby={tab === 'applications' ? 'tab-applications' : tab === 'attendance' ? 'tab-attendance' : tab === 'facilitation' ? 'tab-facilitation' : 'tab-cohorts'}>
         {tab === 'applications' ? <>
           <div className="admin-filters"><div><label htmlFor="cohort-filter">Cohort</label><select id="cohort-filter" value={cohortFilter} onChange={e => { setCohortFilter(e.target.value); setPage(0); }}><option value="">All cohorts</option>{cohorts.map(cohort => <option value={cohort.id} key={cohort.id}>{cohort.name}</option>)}</select></div><div><label htmlFor="status-filter">Status</label><select id="status-filter" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(0); }}><option value="">All statuses</option>{['pending','approved','declined','withdrawn'].map(s => <option key={s} value={s}>{s}</option>)}</select></div><button type="button" className="button button--outline" onClick={() => void loadApplications()}><RefreshCcw size={16}/> Refresh</button></div>
           <div className="admin-list-header"><h3>Student applications</h3><p>Information is confidential. Do not export or share it without authorisation.</p></div>
           {listError && <p role="alert" className="admin-error">{listError}</p>}
           {loading ? <p role="status">Loading applications…</p> : applications.length === 0 ? <div className="admin-panel"><p>No applications match these filters.</p></div> : <div className="admin-application-list">{applications.map(app => <ApplicationRow key={app.id} item={app} onSaved={loadApplications}/>)}</div>}
           <div className="admin-pagination"><button type="button" className="button button--outline" disabled={page === 0 || loading} onClick={() => setPage(p => p-1)}>Previous</button><span>Page {page+1}</span><button type="button" className="button button--outline" disabled={!hasMore || loading} onClick={() => setPage(p => p+1)}>Next</button></div>
-        </> : tab === 'facilitation' && canFacilitate ? <FacilitationDesk canCloudSync={canCloudSync}/> : <>
+        </> : tab === 'attendance' ? <AttendanceManagement cohorts={cohorts}/> : tab === 'facilitation' && canFacilitate ? <FacilitationDesk canCloudSync={canCloudSync}/> : <>
           <div className="admin-list-header"><h3>Programme cohorts</h3><p>New cohorts are created as drafts with registration closed. Only the platform administrator can change opening status.</p></div>
           {actionError && <p role="alert" className="admin-error">{actionError}</p>}{actionMessage && <p role="status" className="admin-success">{actionMessage}</p>}
           <div className="admin-cohort-list">{cohorts.map(cohort => <article className="admin-panel admin-cohort-card" key={cohort.id}><div><h4>{cohort.name}</h4><p>/{cohort.slug}</p><span className={`admin-status admin-status--${cohort.applications_open ? 'approved' : 'pending'}`}>{cohort.applications_open ? 'Applications open' : 'Applications closed'}</span></div>{role === 'owner' && <button type="button" className="button button--outline" onClick={() => void toggleCohort(cohort)}>{cohort.applications_open ? 'Close applications' : 'Request opening'}</button>}</article>)}</div>
