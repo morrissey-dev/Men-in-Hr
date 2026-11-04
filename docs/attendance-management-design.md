@@ -110,7 +110,7 @@ The exact schema and constraints will be finalised after reviewing the existing 
 
 All routes are private and use the existing `/api/admin/*` server-side authentication pattern.
 
-- `GET /api/admin/attendance` — list sessions and summary counts.
+- `GET /api/admin/attendance/sessions` — list sessions and summary counts.
 - `POST /api/admin/attendance/sessions` — create a session.
 - `POST /api/admin/attendance/roster-import` — validate and import the cohort roster.
 - `POST /api/admin/attendance/report-import` — validate, match, and import an attendance report.
