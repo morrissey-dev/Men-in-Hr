@@ -1815,3 +1815,50 @@ a:focus-visible,button:focus-visible {
 /* v0.7.0 optional cloud backup controls */
 .facilitation-cloud {margin-top:1.25rem;}
 .facilitation-cloud-actions {display:flex;gap:.75rem;flex-wrap:wrap;margin:1rem 0;}
+
+
+/* Attendance management prototype (v0.8.0). */
+.attendance-management{display:grid;gap:20px;padding-top:18px}
+.attendance-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.attendance-summary-card{display:grid;gap:5px;padding:18px;border:1px solid #dce6de;border-radius:10px;background:#fff}
+.attendance-summary-card strong{font-family:Georgia,serif;font-size:30px;font-weight:500;color:#173f32}
+.attendance-summary-card span,.attendance-list-toolbar p,.attendance-field-hint{font-size:12px;color:#66796f}
+.attendance-create-form{display:grid;gap:18px}
+.attendance-form-heading,.attendance-list-toolbar,.attendance-session-card,.attendance-session-meta,.attendance-form-actions,.attendance-toolbar-actions{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.attendance-form-heading>svg{color:#326450}
+.attendance-form-heading h4,.attendance-list-toolbar h4{margin:6px 0 0;font-size:20px;color:#173f32}
+.attendance-field-wide{grid-column:1/-1}
+.attendance-field-hint{display:block;margin-top:5px;line-height:1.5}
+.attendance-form-actions{justify-content:flex-end}
+.attendance-list-toolbar{align-items:end;flex-wrap:wrap}
+.attendance-list-toolbar p{margin:5px 0 0}
+.attendance-toolbar-actions select{min-width:160px;min-height:43px;border:1px solid #cbd9cd;border-radius:7px;background:#fff;padding:9px 11px;color:#173a31;font:inherit}
+.attendance-session-list{display:grid;gap:12px}
+.attendance-session-card{align-items:flex-start}
+.attendance-session-main{min-width:0;display:grid;gap:8px}
+.attendance-session-number{font-size:10px;font-weight:800;letter-spacing:.12em;color:#587267}
+.attendance-session-main h5{margin:0;color:#173f32;font-size:17px;line-height:1.45}
+.attendance-session-meta{justify-content:flex-start;flex-wrap:wrap;color:#60756a;font-size:12px}
+.attendance-session-meta span,.attendance-session-meta a{display:inline-flex;align-items:center;gap:6px}
+.attendance-session-meta a{color:#275d4a;font-weight:700;text-decoration:underline}
+.attendance-status{flex-shrink:0}
+.attendance-status--planned{background:#edf2e7;color:#536c4b}
+.attendance-status--completed{background:#e1f2e2;color:#24663b}
+.attendance-status--cancelled{background:#f8e7e4;color:#904c42}
+.attendance-empty{display:grid;justify-items:center;gap:8px;text-align:center;color:#61746c}
+.attendance-empty svg{color:#326450}
+.attendance-empty p{margin:0;color:#244c40;font-weight:700}
+.attendance-empty span{font-size:13px}
+.attendance-next-step{padding:16px 18px;border:1px solid #dce6de;border-radius:10px;background:#f6f8f3}
+.attendance-next-step strong{display:block;color:#244c40;font-size:13px;margin-bottom:5px}
+.attendance-next-step p{margin:0;color:#61746c;font-size:12px;line-height:1.65}
+@media(max-width:650px){
+  .attendance-summary{grid-template-columns:1fr 1fr}
+  .attendance-session-card{flex-direction:column;align-items:flex-start}
+  .attendance-toolbar-actions{width:100%;align-items:stretch;flex-direction:column}
+  .attendance-toolbar-actions select{width:100%}
+  .attendance-form-heading,.attendance-list-toolbar{align-items:flex-start}
+  .attendance-form-actions .button{width:100%;justify-content:center}
+}
+
+.attendance-toolbar-actions .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}

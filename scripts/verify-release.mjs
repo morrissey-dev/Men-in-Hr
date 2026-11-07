@@ -16,6 +16,7 @@ const requiredRoutes = {
   '/api/admin/session': 'netlify/functions/admin-session.mts',
   '/api/admin/applications': 'netlify/functions/admin-applications.mts',
   '/api/admin/cohorts': 'netlify/functions/admin-cohorts.mts',
+  '/api/admin/attendance/sessions': 'netlify/functions/admin-attendance-sessions.mts',
   '/api/admin/facilitation-sync': 'netlify/functions/admin-facilitation-sync.mts',
 };
 
