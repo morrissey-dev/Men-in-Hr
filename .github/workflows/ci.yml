@@ -2,7 +2,7 @@ name: Verify Men in HR Connect
 
 on:
   push:
-    branches: [main, 'release/**']
+    branches: [main, 'release/**', 'feature/**']
   pull_request:
 
 permissions:
