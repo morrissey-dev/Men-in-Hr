@@ -12,6 +12,7 @@ import Privacy from './pages/Privacy';
 import NotFound from './pages/NotFound';
 import Apply from './pages/Apply';
 import Admin from './pages/Admin';
+import MemberPortal from './pages/MemberPortal';
 
 export default function App() {
   return <>
@@ -26,6 +27,7 @@ export default function App() {
         <Route path="/events" element={<Events />} />
         <Route path="/get-involved" element={<GetInvolved />} />
         <Route path="/apply" element={<Apply />} />
+        <Route path="/member" element={<MemberPortal />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/privacy" element={<Privacy />} />

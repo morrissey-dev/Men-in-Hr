@@ -1,6 +1,6 @@
 # Men in HR Connect
 
-**Version 0.7.0 — public website + gated student applications + administrator dashboard + private facilitation workspace** for the Men in HR mentorship initiative being developed within JKUAT HRSA.
+**Version 0.8.0 — public website + gated student applications + administrator dashboard + private session library + attendance workflow + member certificates** for the Men in HR mentorship initiative being developed within JKUAT HRSA.
 
 ## Milestone 4 — deployment readiness (new)
 
@@ -10,6 +10,14 @@
 - Detailed [`deployment runbook`](docs/deployment-runbook.md) and [`go-live checklist`](docs/go-live-checklist.md).
 - **Supabase is provisioned:** all three database migrations are applied; Cohort 1 is closed, and the approved owner account is allowlisted.
 - **Netlify is not deployed yet.** Website hosting, live authentication, and cloud backup are not activated. Student registration remains closed.
+
+## Milestone 5 — private session and member workflow (feature branch only)
+
+- Coordinator-only cohort roster and attendance CSV preview/review/import; exact normalized-name matching; explicit decisions; no inferred absence records.
+- Private resumable upload of completed Google Meet audio/video files, coordinator sharing/revocation, draft AI transcript/summary/action items, and PDF certificates assigned to individual invited members.
+- The site does not join or record live meetings. AI provider settings are not configured; all new privacy, attendance, media, consent, AI, certificate, invite, and member-access gates remain off.
+- New migrations `202611140001_private_session_library.sql` and `202611140002_attendance_import_transactions.sql` are review-only and have not been applied to any database.
+- Work is confined to `feature/meet-recordings-member-portal`; do not merge, apply SQL, set production secrets, provision real members, or deploy until the privacy/provider/retention approvals and staging review are complete. See [`session library operator guide`](docs/session-library-setup.md).
 
 ## What works now
 
