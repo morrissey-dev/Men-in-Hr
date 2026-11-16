@@ -1862,3 +1862,92 @@ a:focus-visible,button:focus-visible {
 }
 
 .attendance-toolbar-actions .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+
+/* Private recordings, reviewed notes, member access, and certificates. */
+.session-resource-manager{display:grid;gap:18px;padding-top:18px}
+.resource-scope,.resource-section-head,.resource-card-header,.resource-member-row{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.resource-scope>div{display:grid;gap:7px;min-width:min(100%,260px)}
+.resource-scope select,.resource-form select{min-height:44px;border:1px solid #cbd9cd;border-radius:7px;background:#fff;padding:9px 11px;color:#173a31;font:inherit}
+.resource-forms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.resource-form{display:grid;align-content:start;gap:10px;min-width:0}
+.resource-form .attendance-form-heading{margin-bottom:4px}
+.resource-form input[type=file]{max-width:100%;font:inherit;color:#244c40}
+.resource-consent{display:flex;align-items:flex-start;gap:10px;margin-top:7px;padding:12px;border:1px solid #dce6de;border-radius:8px;background:#f7f9f5;color:#244c40;font-size:13px;line-height:1.55}
+.resource-consent input,.resource-recipient-list input{flex:0 0 auto;width:18px;height:18px;margin-top:1px;accent-color:#24533f}
+.resource-privacy-note{display:flex;align-items:flex-start;gap:8px;margin:0;color:#61746c;font-size:12px;line-height:1.55}
+.resource-privacy-note svg{flex:0 0 auto;color:#326450;margin-top:1px}
+.resource-progress{display:grid;gap:9px;padding:15px;border:1px solid #cbd9cd;border-radius:9px;background:#f7f9f5;color:#244c40}
+.resource-progress progress{width:100%;height:12px;accent-color:#24533f}
+.resource-section-head{align-items:flex-start}
+.resource-section-head h4{margin:0;color:#173f32;font-size:19px}
+.resource-section-head p{margin:5px 0 0;color:#66796f;font-size:13px;line-height:1.55}
+.resource-section-head>svg{flex:0 0 auto;color:#326450}
+.resource-members{display:grid;gap:14px}
+.resource-member-list{display:grid;gap:10px}
+.resource-member-row{padding:12px 0;border-top:1px solid #e4ebe4}
+.resource-member-row>div{display:grid;gap:4px;min-width:0}
+.resource-member-row strong{color:#173f32;overflow-wrap:anywhere}
+.resource-member-row small{color:#66796f;overflow-wrap:anywhere}
+.resource-share-panel{display:grid;gap:12px;padding:18px;border:1px solid #dce6de;border-radius:10px;background:#fff}
+.resource-recipient-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;max-height:240px;overflow:auto;padding:10px;border:1px solid #e4ebe4;border-radius:8px}
+.resource-recipient-list label{display:flex;align-items:flex-start;gap:8px;padding:6px;color:#244c40;font-size:13px;overflow-wrap:anywhere}
+.resource-list{display:grid;gap:13px}
+.resource-card{display:grid;gap:14px;min-width:0}
+.resource-card-header{align-items:flex-start}
+.resource-kind{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#587267}
+.resource-card h5{margin:5px 0;color:#173f32;font-size:17px;overflow-wrap:anywhere}
+.resource-card-header p{margin:0;color:#66796f;font-size:12px}
+.resource-card .admin-status{white-space:normal}
+.resource-actions{display:flex;flex-wrap:wrap;align-items:center;gap:9px;padding-top:11px;border-top:1px solid #e8eee7}
+.resource-actions .button{min-height:42px}
+.resource-actions .admin-text-button{min-height:38px;padding:8px;color:#315f4a;font:inherit;font-size:13px;text-decoration:underline;background:transparent;border:0;cursor:pointer}
+.resource-actions .resource-delete{color:#8a4038}
+.resource-actions button:disabled{opacity:.58;cursor:not-allowed}
+.resource-job{margin:0;color:#61746c;font-size:13px}
+.resource-note-content pre{max-height:420px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:#244c40;font:inherit;font-size:13px;line-height:1.65}
+.member-resource-list{display:grid;gap:14px;margin:20px 0}
+.member-resource-card{display:grid;gap:10px;padding:20px;border:1px solid #dce6de;border-radius:10px;background:#fff;overflow-wrap:anywhere}
+.member-resource-card h3{margin:0;color:#173f32}
+.member-resource-card p{margin:0;color:#61746c;line-height:1.65}
+.member-resource-card button,.readable-content form button,.readable-content>div>button{min-height:44px;padding:10px 16px;border:0;border-radius:6px;background:#173f32;color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.member-resource-card button:disabled,.readable-content button:disabled{opacity:.55;cursor:not-allowed}
+.readable-content form{display:grid;gap:10px;max-width:520px;margin:20px 0}
+.readable-content form input{min-height:44px;padding:9px 12px;border:1px solid #cbd9cd;border-radius:7px;font:inherit}
+@media(max-width:760px){.resource-forms{grid-template-columns:1fr}.resource-recipient-list{grid-template-columns:1fr}.resource-member-row{align-items:flex-start}.resource-member-row .button{width:100%}.resource-actions .button{width:100%;justify-content:center}}
+
+.attendance-import-workflow{display:grid;gap:16px;padding-top:20px;border-top:1px solid #e2e9df}
+.attendance-import-workflow .attendance-list-toolbar{margin:0}
+.attendance-import-workflow .attendance-list-toolbar h4{margin:8px 0}
+.attendance-import-mode{display:flex;gap:8px;flex-wrap:wrap}
+.attendance-import-mode button{min-height:42px;padding:10px 14px;border:1px solid #cbd9cd;border-radius:7px;background:transparent;color:#25463a;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.attendance-import-mode button.active{background:#173f32;color:#fff;border-color:#173f32}
+.attendance-import-panel{display:grid;gap:18px}
+.attendance-import-panel input[type=file]{max-width:100%;font:inherit}
+.attendance-preview{display:grid;gap:14px;padding:18px;border:1px solid #dce6de;border-radius:10px;background:#fff}
+.attendance-preview-heading{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.attendance-preview-heading h5{margin:0 0 5px;color:#173f32;font-size:17px;overflow-wrap:anywhere}
+.attendance-preview-heading p{margin:0;color:#66796f;font-size:13px}
+.attendance-preview-heading>svg{flex:0 0 auto;color:#326450}
+.attendance-import-counts{display:flex;gap:8px;flex-wrap:wrap}
+.attendance-import-counts span{padding:6px 10px;border-radius:100px;background:#edf3e9;color:#42614f;font-size:12px;text-transform:capitalize}
+.attendance-preview-table-wrap{width:100%;overflow:auto}
+.attendance-preview-table{width:100%;border-collapse:collapse;font-size:13px;text-align:left}
+.attendance-preview-table th,.attendance-preview-table td{padding:10px;border-bottom:1px solid #e8eee7;vertical-align:top}
+.attendance-preview-table th{color:#173f32;font-weight:750}
+.attendance-preview-table td small{display:block;margin-top:5px;color:#8a4038;line-height:1.5}
+.attendance-report-preview{display:grid;gap:10px}
+.attendance-report-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,.7fr);align-items:center;gap:16px;padding:14px;border:1px solid #e4ebe4;border-radius:8px;background:#fbfcf9}
+.attendance-report-row__facts{display:grid;justify-items:start;gap:6px;min-width:0}
+.attendance-report-row__facts>strong{color:#173f32;overflow-wrap:anywhere}
+.attendance-report-row__facts>span:not(.admin-status){color:#66796f;font-size:12px;overflow-wrap:anywhere}
+.attendance-report-row__facts small{color:#8a4038;font-size:12px;line-height:1.5}
+.attendance-report-row>div:last-child{display:grid;gap:7px}
+.attendance-report-row select{min-height:44px;max-width:100%;padding:8px;border:1px solid #cbd9cd;border-radius:7px;background:#fff;color:#173f32;font:inherit}
+.attendance-import-workflow .attendance-field-hint{display:flex;align-items:flex-start;gap:7px;line-height:1.55}
+@media(max-width:680px){.attendance-report-row{grid-template-columns:1fr}.attendance-preview{padding:13px}.attendance-preview-table th,.attendance-preview-table td{padding:8px;font-size:12px}}
+
+.member-resource-pagination{display:grid;justify-items:start;gap:8px;margin:20px 0}
+.member-resource-pagination p{margin:0;color:#61746c;line-height:1.65}
+.member-resource-pagination button{min-height:44px;padding:10px 16px;border:0;border-radius:6px;background:#173f32;color:#fff;font:inherit;font-weight:700;cursor:pointer}
+.member-resource-pagination button:disabled{opacity:.55;cursor:not-allowed}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { CalendarDays, Clock3, Link2, Plus, RefreshCcw } from 'lucide-react';
 import { adminRequest } from '../lib/admin-auth';
+import AttendanceImportWorkflow from './AttendanceImportWorkflow';
 
 type Cohort = { id: string; name: string };
 type AttendanceSession = {
@@ -70,7 +71,7 @@ export default function AttendanceManagement({ cohorts }: { cohorts: Cohort[] })
       setTitle('');
       setScheduledAt('');
       setMeetingUrl('');
-      setMessage('Session created. Attendance report import will be added in the next increment.');
+      setMessage('Session created. You can now review and import its attendance CSV below.');
       await loadSessions();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to create the session.');
@@ -85,7 +86,7 @@ export default function AttendanceManagement({ cohorts }: { cohorts: Cohort[] })
   return <section className="attendance-management" aria-labelledby="attendance-heading">
     <div className="admin-list-header">
       <h3 id="attendance-heading">Attendance management</h3>
-      <p>Create the programme sessions here. Reports from your attendance-tracker extension will be uploaded and matched to the participant register in the next increment.</p>
+      <p>Create the programme sessions here, then import reviewed cohort rosters and tracker reports through the private coordinator workflow.</p>
     </div>
 
     <div className="attendance-summary" aria-label="Session summary">
@@ -169,9 +170,11 @@ export default function AttendanceManagement({ cohorts }: { cohorts: Cohort[] })
         </article>)}
       </div>}
 
+    <AttendanceImportWorkflow cohorts={cohorts} sessions={sessions}/>
+
     <aside className="attendance-next-step">
-      <strong>Next: participant register and report import</strong>
-      <p>Once you provide a sample export from the tracker extension (with participant details redacted if preferred), we can build the correct column mapping and matching logic. The system will not connect to Google Meet or the association Gmail account.</p>
+      <strong>Attendance import privacy</strong>
+      <p>Only explicit, coordinator-confirmed participant matches are recorded. A participant without a row is not marked absent. The system does not connect to Google Meet or the association Gmail account.</p>
     </aside>
   </section>;
 }
