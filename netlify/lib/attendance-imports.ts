@@ -1,6 +1,6 @@
 import { json } from './application-server.ts';
 import { authorize, serviceFetch } from './admin-server.ts';
-import { parseCsv, previewRosterRows, previewAttendanceRows, normalizeName, normalizeEmail, DEFAULT_MAX_CSV_BYTES } from './attendance-csv.ts';
+import { parseCsv, previewRosterRows, previewAttendanceRows, normalizeName, DEFAULT_MAX_CSV_BYTES } from './attendance-csv.ts';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const fail = (status: number, error: string) => json({ error }, status);
@@ -31,6 +31,100 @@ async function rows<T>(s: Parameters<typeof serviceFetch>[0], path: string): Pro
   if (!r.ok) throw new Error('db');
   const result = await r.json(); return Array.isArray(result) ? result as T[] : [];
 }
+async function pagedRows<T>(s: Parameters<typeof serviceFetch>[0], path: string, pageSize = 500): Promise<T[]> {
+  const [resource, query = ''] = path.split('?', 2);
+  const params = new URLSearchParams(query);
+  const result: T[] = [];
+  for (let offset = 0; offset < 50_000; offset += pageSize) {
+    params.set('limit', String(pageSize));
+    params.set('offset', String(offset));
+    const page = await rows<T>(s, `${resource}?${params.toString()}`);
+    result.push(...page);
+    if (page.length < pageSize) return result;
+  }
+  throw new Error('report-size');
+}
+function csvCell(value: unknown): string {
+  let text = String(value ?? '').replace(/\r\n?/g, '\n');
+  if (/^\s*[=+\-@]/.test(text)) text = `'${text}`;
+  return `"${text.replace(/"/g, '""')}"`;
+}
+function csvDownload(fileName: string, data: unknown[][]): Response {
+  const csv = data.map(row => row.map(csvCell).join(',')).join('\r\n') + '\r\n';
+  return new Response(csv, { status:200, headers:{'Content-Type':'text/csv; charset=utf-8','Content-Disposition':`attachment; filename="${fileName}"`,'Cache-Control':'private, no-store, max-age=0','X-Content-Type-Options':'nosniff'} });
+}
+type ReportSession = {id:string;session_number:number;title:string;scheduled_at:string;duration_minutes:number;status:string};
+type ReportParticipant = {id:string;full_name:string;active:boolean};
+type ReportRecord = {id:string;session_id:string;participant_id:string;attended_seconds:number;attendance_percent:number};
+type ReportImport = {id:string;session_id:string;source_file_name:string;confirmed_at:string};
+type ReportUnmatchedRow = {import_id:string;row_number:number;raw_name:string;raw_duration:string|null};
+
+async function cohortAttendanceReport(s: Parameters<typeof serviceFetch>[0], cohortId: string) {
+  const [sessions, participants, imports] = await Promise.all([
+    pagedRows<ReportSession>(s, `attendance_sessions?cohort_id=eq.${cohortId}&select=id,session_number,title,scheduled_at,duration_minutes,status&order=session_number.asc,id.asc`),
+    pagedRows<ReportParticipant>(s, `attendance_participants?cohort_id=eq.${cohortId}&select=id,full_name,active&order=normalized_name.asc,id.asc`),
+    pagedRows<ReportImport>(s, `attendance_imports?cohort_id=eq.${cohortId}&session_id=not.is.null&status=eq.confirmed&select=id,session_id,source_file_name,confirmed_at&order=confirmed_at.asc,id.asc`),
+  ]);
+  const sessionIds = sessions.map(session => session.id);
+  const importsBySession = new Map<string, ReportImport[]>();
+  for (const item of imports) importsBySession.set(item.session_id, [...(importsBySession.get(item.session_id) || []), item]);
+  const activeParticipantIds = new Set(participants.filter(person => person.active).map(person => person.id));
+  const participantCount = activeParticipantIds.size;
+  if (!sessionIds.length) return { cohortId, participantCount, participants:participants.map(person => ({id:person.id,name:person.full_name,active:person.active})), sessions:[], unmatched:[] };
+  const records = await pagedRows<ReportRecord>(s, `attendance_records?session_id=in.(${sessionIds.join(',')})&select=id,session_id,participant_id,attended_seconds,attendance_percent&order=session_id.asc,participant_id.asc`);
+  const sessionById = new Map(sessions.map(session => [session.id, session]));
+  const recordsBySession = new Map<string, ReportRecord[]>();
+  for (const record of records) recordsBySession.set(record.session_id, [...(recordsBySession.get(record.session_id) || []), record]);
+  const importIds = imports.map(item => item.id);
+  const unmatched = importIds.length
+    ? await pagedRows<ReportUnmatchedRow>(s, `attendance_import_rows?import_id=in.(${importIds.join(',')})&match_status=eq.unmatched&select=import_id,row_number,raw_name,raw_duration&order=import_id.asc,row_number.asc`)
+    : [];
+  const importById = new Map(imports.map(item => [item.id, item]));
+  const unmatchedReport = unmatched.flatMap(row => {
+    const item = importById.get(row.import_id);
+    const session = item ? sessionById.get(item.session_id) : undefined;
+    return item && session ? [{
+      sessionNumber:session.session_number,title:session.title,sourceFileName:item.source_file_name,
+      rowNumber:row.row_number,name:row.raw_name,duration:row.raw_duration,
+    }] : [];
+  });
+  const summaries = sessions.map(session => {
+    const sessionRecords = recordsBySession.get(session.id) || [];
+    const sessionImports = importsBySession.get(session.id) || [];
+    const averagePercent = sessionRecords.length
+      ? Number((sessionRecords.reduce((sum, record) => sum + Number(record.attendance_percent || 0), 0) / sessionRecords.length).toFixed(2))
+      : null;
+    return {
+      ...session,
+      confirmedImportCount:sessionImports.length,
+      recordedParticipantCount:sessionRecords.length,
+      currentRosterCount:participantCount,
+      noAttendanceRecordCount:sessionImports.length ? Math.max(0, participantCount-sessionRecords.filter(record => activeParticipantIds.has(record.participant_id)).length) : null,
+      totalRecordedSeconds:sessionRecords.reduce((sum, record) => sum + Number(record.attended_seconds || 0), 0),
+      averageRecordedPercent:averagePercent,
+    };
+  });
+  return { cohortId, participantCount, participants:participants.map(person => ({id:person.id,name:person.full_name,active:person.active})), sessions:summaries, unmatched:unmatchedReport };
+}
+
+async function participantAttendanceHistory(s: Parameters<typeof serviceFetch>[0], cohortId: string, participantId: string) {
+  const participant = (await rows<ReportParticipant>(s, `attendance_participants?id=eq.${participantId}&cohort_id=eq.${cohortId}&select=id,full_name,active&limit=1`))[0];
+  if (!participant) return null;
+  const sessions = await pagedRows<ReportSession>(s, `attendance_sessions?cohort_id=eq.${cohortId}&select=id,session_number,title,scheduled_at,duration_minutes,status&order=session_number.asc,id.asc`);
+  const sessionIds = sessions.map(session => session.id);
+  const records = sessionIds.length
+    ? await rows<ReportRecord>(s, `attendance_records?participant_id=eq.${participantId}&session_id=in.(${sessionIds.join(',')})&select=id,session_id,participant_id,attended_seconds,attendance_percent&limit=1000`)
+    : [];
+  const recordsBySession = new Map(records.map(record => [record.session_id, record]));
+  return {
+    cohortId,
+    participant:{id:participant.id,name:participant.full_name,active:participant.active},
+    sessions:sessions.map(session => {
+      const record = recordsBySession.get(session.id);
+      return { ...session, attendedSeconds:record?.attended_seconds ?? null, attendancePercent:record?.attendance_percent ?? null, hasAttendanceRecord:Boolean(record) };
+    }),
+  };
+}
 export async function adminAttendanceImports(request: Request): Promise<Response> {
   if (!['GET','POST'].includes(request.method)) return fail(405, 'Method not allowed.');
   if (!gate()) return fail(503, 'Attendance imports are unavailable.');
@@ -44,6 +138,47 @@ export async function adminAttendanceImports(request: Request): Promise<Response
       if ((cohortId && !UUID.test(cohortId)) || (sessionId && !UUID.test(sessionId))) return fail(400, 'Invalid filter.');
       const exportFormat = q.get('export') || '';
       if (exportFormat && exportFormat !== 'csv') return fail(400, 'Invalid export format.');
+      const reportType = q.get('report') || '';
+      if (reportType && !['cohort','participant','unmatched'].includes(reportType)) return fail(400, 'Invalid attendance report.');
+      if (reportType && !cohortId) return fail(400, 'Select a cohort for this attendance report.');
+      if (reportType === 'cohort') {
+        const report = await cohortAttendanceReport(s, cohortId);
+        if (exportFormat === 'csv') {
+          const data: unknown[][] = [
+            ['Session number','Topic','Scheduled at','Planned minutes','Confirmed reports','Current active roster','Recorded participants','Current roster members without attendance record','Total recorded seconds','Average recorded attendance percent'],
+            ...report.sessions.map(session => [session.session_number,session.title,session.scheduled_at,session.duration_minutes,session.confirmedImportCount,session.currentRosterCount,session.recordedParticipantCount,session.noAttendanceRecordCount,session.totalRecordedSeconds,session.averageRecordedPercent]),
+          ];
+          return csvDownload('attendance-cohort-summary.csv', data);
+        }
+        if (exportFormat) return fail(400, 'Invalid attendance report export.');
+        return json(report);
+      }
+      if (reportType === 'participant') {
+        const participantId = q.get('participant') || '';
+        if (!UUID.test(participantId)) return fail(400, 'Select a valid participant.');
+        const history = await participantAttendanceHistory(s, cohortId, participantId);
+        if (!history) return fail(404, 'Participant not found in this cohort.');
+        if (exportFormat === 'csv') {
+          const data: unknown[][] = [
+            ['Participant name','Session number','Topic','Scheduled at','Planned minutes','Attended seconds','Attendance percent','Record note'],
+            ...history.sessions.map(session => [history.participant.name,session.session_number,session.title,session.scheduled_at,session.duration_minutes,session.attendedSeconds,session.attendancePercent,session.hasAttendanceRecord ? 'Recorded attendance' : 'No attendance record']),
+          ];
+          return csvDownload('attendance-participant-history.csv', data);
+        }
+        if (exportFormat) return fail(400, 'Invalid attendance report export.');
+        return json(history);
+      }
+      if (reportType === 'unmatched') {
+        const report = await cohortAttendanceReport(s, cohortId);
+        if (exportFormat === 'csv') {
+          return csvDownload('attendance-unmatched-rows.csv', [
+            ['Session number','Topic','Source file','CSV row','Unmatched name','Recorded duration'],
+            ...report.unmatched.map(row => [row.sessionNumber,row.title,row.sourceFileName,row.rowNumber,row.name,row.duration]),
+          ]);
+        }
+        if (exportFormat) return fail(400, 'Invalid attendance report export.');
+        return json({ cohortId, unmatched:report.unmatched });
+      }
       if (exportFormat === 'csv') {
         if (!sessionId) return fail(400, 'Select a session to export.');
         const session = (await rows<{id:string;cohort_id:string;session_number:number;title:string}>(s, `attendance_sessions?id=eq.${sessionId}&select=id,cohort_id,session_number,title&limit=1`))[0];
@@ -100,24 +235,39 @@ export async function adminAttendanceImports(request: Request): Promise<Response
     if (confirm && body.confirm !== true) return fail(400, 'Explicit confirmation is required.');
     if (isRoster) {
       const emailHeader = mapping(body, 'emailHeader', headers, false);
-      const imported = await rows<{id:string;normalized_email:string|null;normalized_name:string}>(s, `attendance_participants?cohort_id=eq.${cohortId}&select=id,normalized_email,normalized_name&limit=2000`);
-      const preview = previewRosterRows(headers, csvRows, nameHeader, emailHeader);
-      const seen = new Set<string>();
-      const reviewed = preview.map(row => {
-        if (row.status === 'invalid') return row;
-        const duplicateFile = !!row.normalizedEmail && seen.has(row.normalizedEmail);
-        if (row.normalizedEmail) seen.add(row.normalizedEmail);
-        const duplicateDb = !!row.normalizedEmail && imported.some(p => p.normalized_email === row.normalizedEmail);
-        return { ...row, status: duplicateFile || duplicateDb ? 'duplicate' : 'new', issues: [...row.issues, ...(duplicateFile ? ['Duplicate email in CSV.'] : []), ...(duplicateDb ? ['Email already exists in cohort roster.'] : [])] };
-      });
+      const imported = await rows<{id:string;full_name:string;normalized_email:string|null}>(s, `attendance_participants?cohort_id=eq.${cohortId}&active=eq.true&select=id,full_name,normalized_email&limit=2000`);
+      const reviewed = previewRosterRows(headers, csvRows, nameHeader, emailHeader, imported.map(person => ({
+        id: person.id, name: person.full_name, normalizedEmail: person.normalized_email,
+      })));
       if (!confirm) return json({ preview: reviewed, counts: countBy(reviewed, 'status') });
-      if (reviewed.some(r => r.status !== 'new')) return fail(409, 'Roster contains invalid or duplicate-email rows; correct the CSV and preview again.');
-      const payload = reviewed.map(r => ({ name:r.name, normalized_name:r.normalizedName, email:r.normalizedEmail || null, normalized_email:r.normalizedEmail || null }));
+      if (!Array.isArray(body.decisions) || body.decisions.length !== reviewed.length) return fail(400, 'A decision is required for every roster row.');
+      const decisionByRow = new Map<number, string>();
+      for (const item of body.decisions) {
+        if (!rec(item) || !Number.isInteger(item.rowNumber) || typeof item.decision !== 'string' || decisionByRow.has(item.rowNumber as number)) return fail(400, 'Roster review decisions are invalid.');
+        decisionByRow.set(item.rowNumber as number, item.decision);
+      }
+      if (decisionByRow.size !== reviewed.length) return fail(400, 'A decision is required for every roster row.');
+      const selected = reviewed.filter(row => {
+        const decision = decisionByRow.get(row.rowNumber);
+        if (row.status === 'invalid') throw new Error('decision');
+        if (row.status === 'duplicate') {
+          if (decision !== 'skip') throw new Error('decision');
+          return false;
+        }
+        if (row.status === 'ambiguous') {
+          if (decision !== 'import-distinct' && decision !== 'skip') throw new Error('decision');
+          return decision === 'import-distinct';
+        }
+        if (decision !== 'import' && decision !== 'skip') throw new Error('decision');
+        return decision === 'import';
+      });
+      const payload = selected.map(r => ({ name:r.name, normalized_name:r.normalizedName, email:r.normalizedEmail || null, normalized_email:r.normalizedEmail || null }));
+      if (!payload.length) return json({ import: { rowCount: 0 }, skippedCount: reviewed.length });
       const result = await serviceFetch(s, 'rpc/admin_commit_attendance_roster_import', { method:'POST', body:JSON.stringify({ p_actor:userId,p_cohort_id:cohortId,p_file_name:(body.fileName as string).trim(),p_rows:payload }) });
       if (!result.ok) return fail(503, 'Roster import could not be saved.');
       const value = await result.json();
       if (!value || (value as {ok?:boolean}).ok !== true) return fail(409, 'Roster changed during review; preview again.');
-      return json({ import: value }, 201);
+      return json({ import: value, skippedCount: reviewed.length - selected.length }, 201);
     }
     const session = (await rows<{id:string;cohort_id:string;duration_minutes:number}>(s, `attendance_sessions?id=eq.${sessionId}&select=id,cohort_id,duration_minutes&limit=1`))[0];
     if (!session || session.cohort_id !== cohortId) return fail(404, 'Session not found.');

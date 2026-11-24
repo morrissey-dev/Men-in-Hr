@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { CalendarDays, Clock3, Link2, Plus, RefreshCcw } from 'lucide-react';
+import { CalendarDays, Clock3, Link2, Pencil, Plus, RefreshCcw, X } from 'lucide-react';
 import { adminRequest } from '../lib/admin-auth';
 import AttendanceImportWorkflow from './AttendanceImportWorkflow';
+import AttendanceReports from './AttendanceReports';
 
 type Cohort = { id: string; name: string };
 type AttendanceSession = {
@@ -25,6 +26,7 @@ export default function AttendanceManagement({ cohorts }: { cohorts: Cohort[] })
   const [scheduledAt, setScheduledAt] = useState('');
   const [durationMinutes, setDurationMinutes] = useState('60');
   const [meetingUrl, setMeetingUrl] = useState('');
+  const [editingSessionId, setEditingSessionId] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -58,8 +60,9 @@ export default function AttendanceManagement({ cohorts }: { cohorts: Cohort[] })
     setMessage('');
     try {
       await adminRequest<{ session: AttendanceSession }>('attendance/sessions', {
-        method: 'POST',
+        method: editingSessionId ? 'PATCH' : 'POST',
         body: JSON.stringify({
+          ...(editingSessionId ? { sessionId: editingSessionId } : {}),
           cohortId,
           sessionNumber: Number(sessionNumber),
           title,
@@ -71,13 +74,38 @@ export default function AttendanceManagement({ cohorts }: { cohorts: Cohort[] })
       setTitle('');
       setScheduledAt('');
       setMeetingUrl('');
-      setMessage('Session created. You can now review and import its attendance CSV below.');
+      setEditingSessionId('');
+      setMessage(editingSessionId ? 'Session details updated.' : 'Session created. You can now review and import its attendance CSV below.');
       await loadSessions();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to create the session.');
     } finally {
       setSaving(false);
     }
+  }
+
+  function editSession(session: AttendanceSession) {
+    const localDate = new Date(new Date(session.scheduled_at).getTime() - new Date(session.scheduled_at).getTimezoneOffset() * 60_000)
+      .toISOString().slice(0, 16);
+    setEditingSessionId(session.id);
+    setCohortId(session.cohort_id);
+    setSessionNumber(String(session.session_number));
+    setTitle(session.title);
+    setScheduledAt(localDate);
+    setDurationMinutes(String(session.duration_minutes));
+    setMeetingUrl(session.meeting_url || '');
+    setError('');
+    setMessage('');
+    document.getElementById('attendance-heading')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function cancelEdit() {
+    setEditingSessionId('');
+    setTitle('');
+    setScheduledAt('');
+    setMeetingUrl('');
+    setSessionNumber('1');
+    setDurationMinutes('60');
   }
 
   const plannedCount = sessions.filter(session => session.status === 'planned').length;
@@ -100,13 +128,13 @@ export default function AttendanceManagement({ cohorts }: { cohorts: Cohort[] })
 
     <form className="admin-panel attendance-create-form" onSubmit={createSession}>
       <div className="attendance-form-heading">
-        <div><span className="eyebrow"><i /> SESSION SETUP</span><h4>Create a session</h4></div>
+        <div><span className="eyebrow"><i /> SESSION SETUP</span><h4>{editingSessionId ? 'Edit session details' : 'Create a session'}</h4></div>
         <CalendarDays size={25} aria-hidden="true"/>
       </div>
       <div className="admin-form-grid">
         <div>
           <label htmlFor="attendance-cohort">Cohort</label>
-          <select id="attendance-cohort" required value={cohortId} onChange={event => setCohortId(event.target.value)}>
+          <select id="attendance-cohort" required disabled={Boolean(editingSessionId)} value={cohortId} onChange={event => setCohortId(event.target.value)}>
             <option value="" disabled>Select a cohort</option>
             {cohorts.map(cohort => <option key={cohort.id} value={cohort.id}>{cohort.name}</option>)}
           </select>
@@ -136,8 +164,9 @@ export default function AttendanceManagement({ cohorts }: { cohorts: Cohort[] })
       </div>
       <div className="attendance-form-actions">
         <button className="button button--dark" type="submit" disabled={saving || !cohortId || cohorts.length === 0 || !scheduledAt}>
-          <Plus size={16}/>{saving ? 'Creating…' : 'Create session'}
+          {editingSessionId ? <Pencil size={16}/> : <Plus size={16}/>}{saving ? 'Saving…' : editingSessionId ? 'Save session' : 'Create session'}
         </button>
+        {editingSessionId && <button className="button button--outline" type="button" disabled={saving} onClick={cancelEdit}><X size={16}/>Cancel edit</button>}
       </div>
     </form>
 
@@ -167,10 +196,12 @@ export default function AttendanceManagement({ cohorts }: { cohorts: Cohort[] })
             </div>
           </div>
           <span className={`admin-status attendance-status attendance-status--${session.status}`}>{session.status}</span>
+          <button type="button" className="button button--outline" onClick={() => editSession(session)}><Pencil size={16}/> Edit details</button>
         </article>)}
       </div>}
 
     <AttendanceImportWorkflow cohorts={cohorts} sessions={sessions}/>
+    <AttendanceReports cohorts={cohorts}/>
 
     <aside className="attendance-next-step">
       <strong>Attendance import privacy</strong>

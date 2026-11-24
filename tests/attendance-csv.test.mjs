@@ -29,18 +29,22 @@ test('duration parsing accepts clock and ordered unit forms, rejecting ambiguous
   for (const value of ['123', '-1m', '1m 1h', '25:00:00', '1:60', '']) assert.equal(parseDuration(value), null, value);
 });
 
-test('roster preview preserves distinct same-name rows and flags invalid emails', () => {
+test('roster preview flags same-name rows for review and invalid emails', () => {
   const result = previewRosterRows(['Full name', 'Email'], [
     ['A. Person', 'A@example.test'], ['a. PERSON', 'other@example.test'], ['No email', 'bad'],
   ], 'Full name', 'Email');
-  assert.deepEqual(result.map(row => row.status), ['new', 'new', 'invalid']);
+  assert.deepEqual(result.map(row => row.status), ['ambiguous', 'ambiguous', 'invalid']);
+  assert.deepEqual(result.map(row => row.nameMatchCount), [1, 1, 0]);
   assert.equal(result[1].name, 'a. PERSON');
   assert.equal(result[2].name, 'No email');
 });
 
-test('roster email and attendance joined-at are optional', () => {
-  const roster = previewRosterRows(['Name'], [['Same Name'], ['Same Name']], 'Name', '');
-  assert.deepEqual(roster.map(row => row.status), ['new', 'new']);
+test('roster email and attendance joined-at are optional, while existing names are flagged', () => {
+  const roster = previewRosterRows(['Name'], [['A New Person'], ['Same Name']], 'Name', '', [
+    { id: '1', name: 'Same Name', normalizedEmail: null },
+  ]);
+  assert.deepEqual(roster.map(row => row.status), ['new', 'ambiguous']);
+  assert.equal(roster[1].nameMatchCount, 1);
   const report = previewAttendanceRows(['Name','Duration'], [['Same Name','1m']], 'Name','Duration','', [{id:'1',name:'Same Name'}]);
   assert.equal(report[0].status, 'suggested');
   assert.equal(report[0].joinedAt, '');

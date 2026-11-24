@@ -44,6 +44,9 @@ function providers({ authenticated = true, role = 'owner', sessions = [] } = {})
       const inserted = { id: sessionId, ...JSON.parse(init.body) };
       return Response.json([inserted], { status: 201 });
     }
+    if (uri.includes('attendance_sessions?') && init.method === 'PATCH') {
+      return Response.json([{ id: sessionId, status: 'planned', created_at: '2026-11-05T17:00:00.000Z', ...JSON.parse(init.body) }]);
+    }
     if (uri.includes('attendance_sessions?')) return Response.json(sessions);
     throw new Error(`Unexpected backend request: ${uri}`);
   };
@@ -138,6 +141,41 @@ test('invalid session data and non-Google Meet links are rejected', async () => 
   assert.equal((await adminAttendanceSessions(req('POST', { ...base, meetingUrl: 'https://example.com/meet' }))).status, 400);
   assert.equal((await adminAttendanceSessions(req('POST', { ...base, durationMinutes: 500 }))).status, 400);
   assert.equal(calls.some(call => call.uri.includes('attendance_sessions?') && call.init.method === 'POST'), false);
+});
+
+test('coordinator can update an existing session through the authenticated server endpoint', async () => {
+  configure();
+  const calls = providers({ role: 'coordinator' });
+  const response = await adminAttendanceSessions(req('PATCH', {
+    sessionId, cohortId, sessionNumber: 2, title: 'Updated session topic',
+    scheduledAt: '2026-11-12T17:00:00.000Z', durationMinutes: 75,
+    meetingUrl: 'https://meet.google.com/abc-defg-hij',
+  }));
+  assert.equal(response.status, 200);
+  assert.equal((await response.json()).session.title, 'Updated session topic');
+  const update = calls.find(call => call.init.method === 'PATCH');
+  assert.ok(update);
+  assert.ok(update.uri.includes(`id=eq.${sessionId}`));
+  assert.deepEqual(JSON.parse(update.init.body), {
+    session_number: 2,
+    title: 'Updated session topic',
+    scheduled_at: '2026-11-12T17:00:00.000Z',
+    duration_minutes: 75,
+    meeting_url: 'https://meet.google.com/abc-defg-hij',
+  });
+});
+
+test('session updates require valid IDs, valid fields, and the configured same origin', async () => {
+  configure();
+  const calls = providers();
+  const base = {
+    sessionId, cohortId, sessionNumber: 1, title: 'Valid session title',
+    scheduledAt: '2026-11-05T17:00:00.000Z', durationMinutes: 60,
+  };
+  assert.equal((await adminAttendanceSessions(req('PATCH', { ...base, sessionId: 'invalid' }))).status, 400);
+  assert.equal((await adminAttendanceSessions(req('PATCH', { ...base, durationMinutes: 500 }))).status, 400);
+  assert.equal((await adminAttendanceSessions(req('PATCH', base, 'https://attacker.example'))).status, 403);
+  assert.equal(calls.some(call => call.init.method === 'PATCH'), false);
 });
 
 test('cohort and participant information is not included in unauthorised responses', async () => {
