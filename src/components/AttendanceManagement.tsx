@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { CalendarDays, Clock3, Link2, Pencil, Plus, RefreshCcw, X } from 'lucide-react';
 import { adminRequest } from '../lib/admin-auth';
+import { PROGRAMME_MODULES } from '../lib/programme-modules';
 import AttendanceImportWorkflow from './AttendanceImportWorkflow';
 import AttendanceReports from './AttendanceReports';
 
@@ -144,8 +145,25 @@ export default function AttendanceManagement({ cohorts }: { cohorts: Cohort[] })
           <input id="attendance-number" type="number" min="1" max="20" required value={sessionNumber} onChange={event => setSessionNumber(event.target.value)}/>
         </div>
         <div className="attendance-field-wide">
+          <label htmlFor="attendance-module">Programme module</label>
+          <select
+            id="attendance-module"
+            value={PROGRAMME_MODULES.find(module => module.title === title)?.id ?? 'custom'}
+            onChange={event => {
+              const module = PROGRAMME_MODULES.find(item => item.id === event.target.value);
+              if (module) setTitle(module.title);
+              else if (PROGRAMME_MODULES.some(item => item.title === title)) setTitle('');
+            }}
+            aria-describedby="attendance-module-hint"
+          >
+            <option value="custom">Custom topic</option>
+            {PROGRAMME_MODULES.map(module => <option key={module.id} value={module.id}>{module.title}</option>)}
+          </select>
+          <span className="attendance-field-hint" id="attendance-module-hint">Choose one of the programme modules to fill the session title, or keep a custom topic.</span>
+        </div>
+        <div className="attendance-field-wide">
           <label htmlFor="attendance-title">Session topic / title</label>
-          <input id="attendance-title" type="text" minLength={4} maxLength={160} required value={title} onChange={event => setTitle(event.target.value)} placeholder="e.g. Self-Discovery, Personal Growth and Goal Setting"/>
+          <input id="attendance-title" type="text" minLength={4} maxLength={160} required value={title} onChange={event => setTitle(event.target.value)} placeholder="Select a module above or enter a custom session title"/>
         </div>
         <div>
           <label htmlFor="attendance-date">Date and start time</label>
