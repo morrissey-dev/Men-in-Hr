@@ -55,7 +55,7 @@ function validMeetUrl(value: unknown): string | null | undefined {
 }
 
 export async function adminAttendanceSessions(request: Request): Promise<Response> {
-  if (request.method !== 'GET' && request.method !== 'POST') return failure(405, 'Method not allowed.');
+  if (request.method !== 'GET' && request.method !== 'POST' && request.method !== 'PATCH') return failure(405, 'Method not allowed.');
   const check = await authorize(request, request.method !== 'GET');
   if (check.error) return check.error;
   const { settings: s, userId } = check.admin;
@@ -81,6 +81,7 @@ export async function adminAttendanceSessions(request: Request): Promise<Respons
     try { body = await readJson(request); } catch { return failure(400, 'Invalid request.'); }
     if (!body) return failure(400, 'Send a valid JSON request within the size limit.');
 
+    const sessionId = body.sessionId;
     const cohortId = body.cohortId;
     const sessionNumber = Number(body.sessionNumber);
     const title = typeof body.title === 'string' ? body.title.trim() : '';
@@ -88,7 +89,8 @@ export async function adminAttendanceSessions(request: Request): Promise<Respons
     const durationMinutes = Number(body.durationMinutes ?? 60);
     const meetingUrl = validMeetUrl(body.meetingUrl);
 
-    if (typeof cohortId !== 'string' || !UUID.test(cohortId)
+    if ((request.method === 'PATCH' && (typeof sessionId !== 'string' || !UUID.test(sessionId)))
+      || typeof cohortId !== 'string' || !UUID.test(cohortId)
       || !Number.isInteger(sessionNumber) || sessionNumber < 1 || sessionNumber > 20
       || title.length < 4 || title.length > 160
       || !scheduledAt || !Number.isFinite(Date.parse(scheduledAt))
@@ -98,15 +100,25 @@ export async function adminAttendanceSessions(request: Request): Promise<Respons
     }
 
     const row = {
-      cohort_id: cohortId,
       session_number: sessionNumber,
       title,
       scheduled_at: new Date(scheduledAt).toISOString(),
       duration_minutes: durationMinutes,
       meeting_url: meetingUrl,
-      status: 'planned',
-      created_by: userId,
+      ...(request.method === 'POST' ? { cohort_id: cohortId, status: 'planned' as const, created_by: userId } : {}),
     };
+    if (request.method === 'PATCH') {
+      const response = await serviceFetch(s, `attendance_sessions?id=eq.${sessionId}&select=id,cohort_id,session_number,title,scheduled_at,duration_minutes,meeting_url,status,created_at`, {
+        method: 'PATCH',
+        headers: { Prefer: 'return=representation' },
+        body: JSON.stringify(row),
+      });
+      if (response.status === 409) return failure(409, 'That session number already exists for this cohort.');
+      if (!response.ok) return failure(503, 'The session could not be updated. Confirm that the attendance schema has been installed.');
+      const rows = await response.json() as SessionRow[];
+      if (!Array.isArray(rows) || !rows[0]?.id) return failure(404, 'The session could not be found.');
+      return json({ session: rows[0], message: 'Session updated.' });
+    }
     const response = await serviceFetch(s, 'attendance_sessions?select=id,cohort_id,session_number,title,scheduled_at,duration_minutes,meeting_url,status,created_at', {
       method: 'POST',
       headers: { Prefer: 'return=representation' },

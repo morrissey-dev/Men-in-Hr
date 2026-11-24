@@ -2,7 +2,7 @@ export const DEFAULT_MAX_CSV_BYTES = 500 * 1024;
 export const DEFAULT_MAX_DATA_ROWS = 1_000;
 
 export type CsvLimits = { maxBytes?: number; maxRows?: number };
-export type RosterStatus = 'new' | 'duplicate' | 'invalid';
+export type RosterStatus = 'new' | 'duplicate' | 'ambiguous' | 'invalid';
 export type RosterPreviewRow = {
   rowNumber: number;
   source: string[];
@@ -11,9 +11,10 @@ export type RosterPreviewRow = {
   email: string;
   normalizedEmail: string;
   status: RosterStatus;
+  nameMatchCount: number;
   issues: string[];
 };
-export type RosterCandidate = { name: string; email?: string; id?: string };
+export type RosterCandidate = { id?: string; name: string; email?: string; normalizedEmail?: string | null };
 export type AttendanceStatus = 'suggested' | 'ambiguous' | 'unmatched' | 'invalid';
 export type AttendancePreviewRow = {
   rowNumber: number;
@@ -154,10 +155,16 @@ function headerIndex(headers: string[], chosen: string): number {
 
 export function previewRosterRows(
   headers: string[], rows: string[][], nameHeader: string, emailHeader: string,
+  existingRoster: RosterCandidate[] = [],
 ): RosterPreviewRow[] {
   const nameIndex = headerIndex(headers, nameHeader);
   const emailIndex = headerIndex(headers, emailHeader);
   const seenEmails = new Set<string>();
+  const sourceNameCounts = new Map<string, number>();
+  for (const source of rows) {
+    const name = normalizeName(source[nameIndex] ?? '');
+    if (name) sourceNameCounts.set(name, (sourceNameCounts.get(name) ?? 0) + 1);
+  }
   return rows.map((source, index) => {
     const name = source[nameIndex] ?? '';
     const email = source[emailIndex] ?? '';
@@ -168,12 +175,24 @@ export function previewRosterRows(
     if (emailHeader && emailIndex < 0) issues.push('Selected email header was not found.');
     if (!normalizedName) issues.push('Name is required.');
     if (email.trim() && !normalizedEmail) issues.push('Email is invalid.');
-    const duplicate = Boolean(normalizedEmail && seenEmails.has(normalizedEmail));
-    if (duplicate) issues.push('Duplicate roster email.');
+    const duplicateInFile = Boolean(normalizedEmail && seenEmails.has(normalizedEmail));
+    const duplicateInRoster = Boolean(normalizedEmail && existingRoster.some(person => person.normalizedEmail === normalizedEmail));
+    if (duplicateInFile) issues.push('Duplicate email in CSV.');
+    if (duplicateInRoster) issues.push('Email already exists in this cohort roster.');
     if (normalizedEmail) seenEmails.add(normalizedEmail);
+    const existingNameMatches = normalizedName
+      ? existingRoster.filter(person => normalizeName(person.name) === normalizedName).length
+      : 0;
+    const sourceNameMatches = normalizedName ? Math.max(0, (sourceNameCounts.get(normalizedName) ?? 0) - 1) : 0;
+    const nameMatchCount = existingNameMatches + sourceNameMatches;
+    if (existingNameMatches) issues.push('Name matches an existing cohort participant; confirm whether this is a different person.');
+    if (sourceNameMatches) issues.push('Name appears more than once in this CSV; confirm each row is a different person.');
+    const invalid = issues.some(issue => issue === 'Name is required.' || issue === 'Email is invalid.' || issue.includes('header was not found'));
+    const duplicate = duplicateInFile || duplicateInRoster;
     return {
       rowNumber: index + 2, source: [...source], name, normalizedName, email, normalizedEmail,
-      status: issues.some(issue => issue.includes('required') || issue.includes('invalid') || issue.includes('not found')) ? 'invalid' : duplicate ? 'duplicate' : 'new',
+      status: invalid ? 'invalid' : duplicate ? 'duplicate' : nameMatchCount ? 'ambiguous' : 'new',
+      nameMatchCount,
       issues,
     };
   });

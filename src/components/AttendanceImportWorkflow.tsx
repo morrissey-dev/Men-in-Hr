@@ -4,12 +4,12 @@ import { adminDownload, adminRequest } from '../lib/admin-auth';
 
 type Cohort = { id: string; name: string };
 type Session = { id: string; cohort_id: string; session_number: number; title: string; duration_minutes: number; scheduled_at: string };
-type RosterRow = { rowNumber: number; name: string; email: string; normalizedEmail: string; status: 'new'|'duplicate'|'invalid'; issues: string[] };
+type RosterRow = { rowNumber: number; name: string; email: string; normalizedEmail: string; status: 'new'|'duplicate'|'ambiguous'|'invalid'; nameMatchCount: number; issues: string[] };
 type Candidate = { id: string; name: string };
 type AttendanceRow = { rowNumber: number; name: string; duration: number|null; joinedAt: string; status: 'suggested'|'ambiguous'|'unmatched'|'invalid'; suggestedMatch: Candidate|null; candidateCount: number; candidates: Candidate[]; duplicateSourceName: boolean; issues: string[] };
 type Counts = Record<string, number>;
 type SessionSummary = { session: Session; confirmedMatches: number; participantCount?: number; noAttendanceRecordCount?: number; imports: { id: string; rowCount: number; summary: Record<string, unknown>; confirmedAt: string }[] };
-type ImportResponse = { preview: RosterRow[]|AttendanceRow[]; counts: Counts; import?: { id: string; rowCount: number } };
+type ImportResponse = { preview: RosterRow[]|AttendanceRow[]; counts: Counts; import?: { id?: string; rowCount: number }; skippedCount?: number };
 type Mode = 'roster'|'report';
 
 function csvHeaders(text: string): string[] {
@@ -55,6 +55,7 @@ export default function AttendanceImportWorkflow({ cohorts, sessions }: { cohort
   const [preview, setPreview] = useState<RosterRow[]|AttendanceRow[]|null>(null);
   const [counts, setCounts] = useState<Counts>({});
   const [decisions, setDecisions] = useState<Record<number, string|null|undefined>>({});
+  const [rosterDecisions, setRosterDecisions] = useState<Record<number, 'import'|'import-distinct'|'skip'|undefined>>({});
   const [summary, setSummary] = useState<SessionSummary|null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -76,7 +77,7 @@ export default function AttendanceImportWorkflow({ cohorts, sessions }: { cohort
     return () => { active = false; };
   }, [mode, cohortId, sessionId, message]);
 
-  function resetFile() { setFileName(''); setCsv(''); setHeaders([]); setNameHeader(''); setEmailHeader(''); setDurationHeader(''); setJoinedAtHeader(''); setPreview(null); setCounts({}); setDecisions({}); }
+  function resetFile() { setFileName(''); setCsv(''); setHeaders([]); setNameHeader(''); setEmailHeader(''); setDurationHeader(''); setJoinedAtHeader(''); setPreview(null); setCounts({}); setDecisions({}); setRosterDecisions({}); }
   async function chooseFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0]; event.target.value = '';
     setError(''); setMessage(''); resetFile();
@@ -109,7 +110,10 @@ export default function AttendanceImportWorkflow({ cohorts, sessions }: { cohort
       const action = mode === 'roster' ? 'roster-preview' : 'report-preview';
       const result = await adminRequest<ImportResponse>('attendance/imports', { method: 'POST', body: JSON.stringify(requestBody(action)) });
       setPreview(result.preview || []); setCounts(result.counts || {});
-      if (mode === 'report') {
+      if (mode === 'roster') {
+        const rows = result.preview as RosterRow[];
+        setRosterDecisions(Object.fromEntries(rows.filter(row => row.status === 'new').map(row => [row.rowNumber, 'import'])));
+      } else {
         const rows = result.preview as AttendanceRow[];
         setDecisions(Object.fromEntries(rows.filter(row => row.status === 'invalid').map(row => [row.rowNumber, undefined])));
       }
@@ -120,7 +124,10 @@ export default function AttendanceImportWorkflow({ cohorts, sessions }: { cohort
   const rosterRows = mode === 'roster' ? (preview as RosterRow[]|null) : null;
   const reportRows = mode === 'report' ? (preview as AttendanceRow[]|null) : null;
   const hasInvalid = mode === 'roster'
-    ? Boolean(rosterRows?.some(row => row.status !== 'new'))
+    ? Boolean(rosterRows?.some(row => row.status === 'invalid'
+      || (row.status === 'new' && !['import','skip'].includes(rosterDecisions[row.rowNumber] || ''))
+      || (row.status === 'ambiguous' && !['import-distinct','skip'].includes(rosterDecisions[row.rowNumber] || ''))
+      || (row.status === 'duplicate' && rosterDecisions[row.rowNumber] !== 'skip')))
     : Boolean(reportRows?.some(row => row.status === 'invalid' || decisions[row.rowNumber] === undefined));
   const selectedParticipantIds = reportRows?.map(row => decisions[row.rowNumber]).filter((id): id is string => typeof id === 'string') || [];
   const hasDuplicateParticipantChoice = new Set(selectedParticipantIds).size !== selectedParticipantIds.length;
@@ -134,13 +141,14 @@ export default function AttendanceImportWorkflow({ cohorts, sessions }: { cohort
       const action = mode === 'roster' ? 'roster-confirm' : 'report-confirm';
       const body = requestBody(action) as Record<string, unknown>;
       body.confirm = true;
-      if (mode === 'report') body.decisions = reportRows!.map(row => {
+      if (mode === 'roster') body.decisions = rosterRows!.map(row => ({ rowNumber: row.rowNumber, decision: rosterDecisions[row.rowNumber] }));
+      else body.decisions = reportRows!.map(row => {
         const participantId = decisions[row.rowNumber];
         return { rowNumber: row.rowNumber, participantId: participantId === null ? null : participantId, ...(participantId === null ? { unmatched: true } : {}) };
       });
       const result = await adminRequest<ImportResponse>('attendance/imports', { method: 'POST', body: JSON.stringify(body) });
       const imported = result.import?.rowCount ?? preview.length;
-      setMessage(mode === 'roster' ? `Imported ${imported} participant(s).` : `Saved the attendance review for ${imported} CSV row(s). Only confirmed matches create attendance records.`);
+      setMessage(mode === 'roster' ? `Imported ${imported} participant(s); skipped ${result.skippedCount ?? 0} row(s).` : `Saved the attendance review for ${imported} CSV row(s). Only confirmed matches create attendance records.`);
       resetFile(); setPreview(null); setCounts({}); setDecisions({});
     } catch (e) { setError(e instanceof Error ? e.message : 'The import could not be saved. Review the source file and try again.'); }
     finally { setBusy(false); }
@@ -181,7 +189,7 @@ export default function AttendanceImportWorkflow({ cohorts, sessions }: { cohort
     {preview && <div className="attendance-preview" aria-labelledby="csv-preview-title">
       <div className="attendance-preview-heading"><div><h5 id="csv-preview-title">Review before saving: {fileName}</h5><p>{preview.length} data row(s). No data is stored until you confirm.</p></div><Users size={20} aria-hidden="true"/></div>
       <div className="attendance-import-counts" aria-label="Preview status summary">{Object.entries(counts).map(([status,count]) => <span key={status}><strong>{count}</strong> {status}</span>)}</div>
-      {mode === 'roster' && rosterRows && <div className="attendance-preview-table-wrap"><table className="attendance-preview-table"><thead><tr><th scope="col">Row</th><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Review</th></tr></thead><tbody>{rosterRows.map(row => <tr key={row.rowNumber}><th scope="row">{row.rowNumber}</th><td>{row.name || '—'}</td><td>{row.email || '—'}</td><td><span className={`admin-status ${row.status==='new'?'admin-status--approved':''}`}>{row.status}</span>{row.issues.length > 0 && <small>{row.issues.join(' ')}</small>}</td></tr>)}</tbody></table></div>}
+      {mode === 'roster' && rosterRows && <div className="attendance-preview-table-wrap"><table className="attendance-preview-table"><thead><tr><th scope="col">Row</th><th scope="col">Name</th><th scope="col">Email</th><th scope="col">Review</th><th scope="col">Decision</th></tr></thead><tbody>{rosterRows.map(row => <tr key={row.rowNumber}><th scope="row">{row.rowNumber}</th><td>{row.name || '—'}</td><td>{row.email || '—'}</td><td><span className={`admin-status ${row.status==='new'?'admin-status--approved':''}`}>{row.status}</span>{row.nameMatchCount > 0 && <small>{row.nameMatchCount} other roster record(s) share this normalized name.</small>}{row.issues.length > 0 && <small>{row.issues.join(' ')}</small>}</td><td>{row.status === 'invalid' ? <span>Correct the CSV and preview again.</span> : <><label className="sr-only" htmlFor={`roster-decision-${row.rowNumber}`}>Decision for roster row {row.rowNumber}</label><select id={`roster-decision-${row.rowNumber}`} value={rosterDecisions[row.rowNumber] || ''} onChange={event => setRosterDecisions(current => ({ ...current, [row.rowNumber]: (event.target.value || undefined) as 'import'|'import-distinct'|'skip'|undefined }))}><option value="">Choose a decision</option>{row.status === 'new' && <option value="import">Add participant</option>}{row.status === 'ambiguous' && <option value="import-distinct">Add as a different person</option>}{row.status !== 'duplicate' && <option value="skip">Skip this row</option>}{row.status === 'duplicate' && <option value="skip">Skip duplicate row</option>}</select></>}</td></tr>)}</tbody></table></div>}
       {mode === 'report' && reportRows && <div className="attendance-report-preview">{reportRows.map(row => <article className="attendance-report-row" key={row.rowNumber}><div className="attendance-report-row__facts"><strong>Row {row.rowNumber}: {row.name || 'Name missing'}</strong><span>{row.duration === null ? 'Duration invalid' : `${row.duration} seconds attended`}{row.joinedAt ? ` · Joined at ${row.joinedAt}` : ''}</span><span className={`admin-status ${row.status==='suggested'?'admin-status--approved':''}`}>{row.status}{row.duplicateSourceName ? ' · repeated name in report' : ''}</span>{row.issues.length > 0 && <small>{row.issues.join(' ')}</small>}{row.suggestedMatch && <small>Suggested exact-name match: {row.suggestedMatch.name}. Please confirm the participant below.</small>}</div>{row.status !== 'invalid' && <div><label htmlFor={`match-row-${row.rowNumber}`}>Coordinator decision for row {row.rowNumber}</label><select id={`match-row-${row.rowNumber}`} value={decisions[row.rowNumber] === null ? '__unmatched__' : decisions[row.rowNumber] || ''} onChange={event => setDecisions(current => ({ ...current, [row.rowNumber]: event.target.value === '__unmatched__' ? null : event.target.value || undefined }))}><option value="">Choose an exact-name match or leave unmatched</option>{row.candidates.map(candidate => <option key={candidate.id} value={candidate.id}>{candidate.name}</option>)}<option value="__unmatched__">Leave unmatched (no attendance record)</option></select></div>}</article>)}</div>}
       {hasDuplicateParticipantChoice && <p className="admin-error" role="alert">One participant is selected on more than one row. Choose only one attendance row per participant; no durations are combined automatically.</p>}
       {hasInvalid && <p className="attendance-field-hint"><AlertCircle size={15} aria-hidden="true"/> Resolve invalid rows or make an explicit decision for every attendance row before confirmation. Roster duplicate/invalid rows must be corrected in the CSV and previewed again.</p>}

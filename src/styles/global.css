@@ -1945,6 +1945,12 @@ a:focus-visible,button:focus-visible {
 .attendance-report-row>div:last-child{display:grid;gap:7px}
 .attendance-report-row select{min-height:44px;max-width:100%;padding:8px;border:1px solid #cbd9cd;border-radius:7px;background:#fff;color:#173f32;font:inherit}
 .attendance-import-workflow .attendance-field-hint{display:flex;align-items:flex-start;gap:7px;line-height:1.55}
+.attendance-reports{display:grid;gap:16px;padding-top:20px;border-top:1px solid #e2e9df}
+.attendance-reports .attendance-report-panel{display:grid;gap:18px}
+.attendance-reports .attendance-form-actions{justify-content:flex-start;flex-wrap:wrap}
+.attendance-reports .attendance-list-toolbar{margin:0}
+.attendance-reports .attendance-list-toolbar h4,.attendance-reports .attendance-list-toolbar h5{margin:8px 0;color:#173f32}
+.attendance-participant-history{display:grid;gap:12px}
 @media(max-width:680px){.attendance-report-row{grid-template-columns:1fr}.attendance-preview{padding:13px}.attendance-preview-table th,.attendance-preview-table td{padding:8px;font-size:12px}}
 
 .member-resource-pagination{display:grid;justify-items:start;gap:8px;margin:20px 0}
