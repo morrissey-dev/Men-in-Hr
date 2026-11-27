@@ -37,7 +37,7 @@ export const programmeModules: ProgrammeModule[] = [
       'Executive presence and professional influence.',
       'Professional certifications and career progression.',
     ],
-    scheduledAt: '2026-11-06T20:00:00+03:00', speaker: 'Mr. Richard J. Magoma',
+    scheduledAt: '2026-11-06T20:00:00+03:00', speaker: 'Chris Fanaka',
   },
   {
     number: 3, id: 'professional-legacy',
