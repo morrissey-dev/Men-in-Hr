@@ -31,7 +31,7 @@ describe('Cohort 1 programme content', () => {
       '2026-11-25T20:00:00+03:00', '2026-11-27T20:00:00+03:00',
     ]);
     expect(programmeModules.map(module => module.speaker)).toEqual([
-      'Eston Kariuki', 'Mr. Richard J. Magoma', 'CHRP. Oscar Kisuya', 'Kephar Ojijo',
+      'Eston Kariuki', 'Chris Fanaka', 'CHRP. Oscar Kisuya', 'Kephar Ojijo',
       'Mr. Itai Mbonda', 'Mr. Jay Walemba', 'Mr. Vincent Otumbo', 'Dr. Francis Kangure',
     ]);
   });
