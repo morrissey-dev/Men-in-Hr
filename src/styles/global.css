@@ -1950,6 +1950,37 @@ a:focus-visible,button:focus-visible {
 .attendance-reports .attendance-form-actions{justify-content:flex-start;flex-wrap:wrap}
 .attendance-reports .attendance-list-toolbar{margin:0}
 .attendance-reports .attendance-list-toolbar h4,.attendance-reports .attendance-list-toolbar h5{margin:8px 0;color:#173f32}
+
+/* Cohort 1 programme, timetable and concept-note content. */
+.programme-objective{border:1px solid #d5e2c7;border-left:4px solid #6f9864;background:#f3f7ed;border-radius:9px;padding:24px 27px;margin-bottom:50px}
+.programme-objective>p{max-width:920px;margin:12px 0 0;color:#25483a;font-family:Georgia,serif;font-size:clamp(18px,2vw,24px);line-height:1.55}
+.programme-objectives{margin-top:18px;color:#52675b;font-size:13px;line-height:1.7}
+.programme-objectives summary{width:fit-content;color:#285c43;font-weight:750;cursor:pointer}
+.programme-objectives ol{display:grid;gap:8px;margin:14px 0 0;padding-left:22px}
+.programme-session-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.programme-session{min-width:0;border:1px solid #dfe5da;border-radius:11px;background:#fff;padding:25px 26px;box-shadow:0 8px 22px rgba(24,54,43,.035)}
+.programme-session__top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.programme-session__number{font-size:10px;font-weight:850;letter-spacing:.12em;color:#587267}
+.programme-session__focus{border-radius:30px;padding:6px 10px;background:#edf3e5;color:#42634d;font-size:10px;font-weight:750}
+.programme-session h3,.programme-two-column h2,.programme-evaluation h2{font-family:Georgia,serif;font-weight:500;letter-spacing:-.025em;color:#1a3d34}
+.programme-session h3{font-size:22px;line-height:1.3;margin:16px 0 8px}
+.programme-session__summary,.programme-section-intro,.programme-evaluation p{font-size:13px;line-height:1.75;color:#697d72}
+.programme-session__summary{margin:0 0 16px}
+.programme-session__meta{display:grid;gap:9px;padding:15px 0;border-top:1px solid #e7ece4;border-bottom:1px solid #e7ece4;color:#496254;font-size:12px}
+.programme-session__meta span{display:flex;align-items:flex-start;gap:8px;min-width:0}
+.programme-session__meta svg{flex:none;color:#62846a;margin-top:1px}
+.programme-session h4{margin:17px 0 8px;color:#264c3c;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
+.programme-session ul,.programme-list{display:grid;gap:8px;margin:0;padding-left:19px;color:#586f62;font-size:12px;line-height:1.65}
+.programme-detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 26px;margin:0;padding:0;list-style:none}
+.programme-detail-grid li{display:flex;align-items:flex-start;gap:10px;border:1px solid #dfe8dc;border-radius:8px;background:#fff;padding:16px;color:#51685a;font-size:13px;line-height:1.65}
+.programme-detail-grid svg{flex:none;color:#5e8765;margin-top:2px}
+.programme-two-column{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start}
+.programme-two-column h2,.programme-evaluation h2{font-size:clamp(26px,3vw,36px);line-height:1.2;margin:13px 0 18px}
+.programme-two-column .programme-section-intro{margin:12px 0}
+.programme-two-column .programme-list{font-size:13px;margin-bottom:20px}
+.programme-evaluation{display:grid;grid-template-columns:1fr 1fr;gap:45px;align-items:start}
+.programme-evaluation .programme-list{padding:20px 24px;background:#fff;border:1px solid #e0e7dd;border-radius:9px}
+@media(max-width:760px){.programme-session-grid,.programme-detail-grid,.programme-two-column,.programme-evaluation{grid-template-columns:1fr}.programme-two-column,.programme-evaluation{gap:28px}.programme-session{padding:21px}.programme-objective{padding:20px}.programme-session h3{font-size:20px}}
 .attendance-participant-history{display:grid;gap:12px}
 @media(max-width:680px){.attendance-report-row{grid-template-columns:1fr}.attendance-preview{padding:13px}.attendance-preview-table th,.attendance-preview-table td{padding:8px;font-size:12px}}
 

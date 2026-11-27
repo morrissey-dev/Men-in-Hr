@@ -6,7 +6,7 @@ import { readPublicStatus, submitApplication } from '../netlify/lib/application-
 const sample = {
   ...initialApplication,
   fullName: 'Test Student', email: 'Student@example.com', institution: 'JKUAT', yearOfStudy: '3',
-  interests: ['self-discovery', 'hr-career-pathways'], motivation: 'I want to learn about careers.',
+  interests: ['professional-identity', 'strategic-hr-leadership'], motivation: 'I want to learn about careers.',
   isAdult: true, privacyAccepted: true, turnstileToken: 'valid-test-token',
 };
 const envKeys = ['APPLICATIONS_OPEN', 'PRIVACY_APPROVED', 'RETENTION_PROCESS_ACTIVE', 'SITE_ORIGIN', 'SUPABASE_URL', 'SUPABASE_SECRET_KEY', 'TURNSTILE_SITE_KEY', 'TURNSTILE_SECRET_KEY', 'PRIVACY_CONTROLLER_NAME', 'PRIVACY_CONTACT_EMAIL', 'APPLICATION_RETENTION_DAYS', 'APPLICATION_COHORT_SLUG'];
@@ -64,8 +64,13 @@ test('rejects unexpected interests and unconfirmed privacy or adulthood', () => 
   assert.ok(invalid.errors.privacyAccepted);
 });
 
+test('accepts legacy interest IDs for applications started before the curriculum update', () => {
+  const result = validateApplication({ ...sample, interests: ['self-discovery', 'hr-career-pathways'] });
+  assert.deepEqual(result.errors, {});
+});
+
 test('rejects honeypot, oversized message and too many interests', () => {
-  const invalid = validateApplication({ ...sample, website: 'spam', motivation: 'x'.repeat(401), interests: ['self-discovery', 'hr-career-pathways', 'personal-branding', 'communication'] });
+  const invalid = validateApplication({ ...sample, website: 'spam', motivation: 'x'.repeat(401), interests: ['professional-identity', 'strategic-hr-leadership', 'professional-legacy', 'communication'] });
   assert.equal(Object.keys(invalid.errors).length, 3);
 });
 
