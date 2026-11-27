@@ -1,7 +1,13 @@
 import { topics } from '../data/content.ts';
 
 export const NOTICE_VERSION = '2026-10-v1';
-export const TOPIC_IDS = topics.map(topic => topic.slug);
+// Preserve IDs used by earlier application forms during the transition to the
+// official Cohort 1 modules. Existing submissions keep their original meaning.
+const LEGACY_TOPIC_IDS = [
+  'self-discovery', 'hr-career-pathways', 'personal-branding', 'communication',
+  'mentorship', 'leadership', 'financial-literacy', 'review-and-action',
+];
+export const TOPIC_IDS = [...new Set([...topics.map(topic => topic.slug), ...LEGACY_TOPIC_IDS])];
 
 export type ApplicationInput = {
   fullName: string;
